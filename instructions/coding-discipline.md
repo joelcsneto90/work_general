@@ -1,0 +1,48 @@
+## Coding discipline
+
+Based on [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills),
+tightened, with a few additions. Applies to every project; the project's `CLAUDE.md` adds the
+stack-specific rules. Bias toward caution over speed; for trivial tasks, use judgment.
+
+### 1. Think before coding — don't assume, don't hide confusion
+* State assumptions. Multiple readings of the request? Present them; don't pick silently.
+* Simpler approach than the one asked? Say so first. Push back when warranted.
+* Unclear? Stop, name what's unclear, ask.
+
+### 2. Read before writing — the codebase already has an answer
+* Look at how the codebase already solves similar problems, and follow that pattern.
+* Reuse existing helpers, utilities and abstractions before writing new ones.
+* No new dependency without saying why the existing ones don't cover it.
+
+### 3. Simplicity first — minimum code, nothing speculative
+* No features, options, flexibility or configurability beyond what was asked.
+* No abstraction for single-use code.
+* No error handling, null-guards, fallbacks or "just in case" calls for cases that can't
+  happen. If upstream guarantees a value, trust it.
+* 200 lines that could be 50? Rewrite. Test: would a senior engineer call it overcomplicated?
+
+### 4. Surgical changes — touch only what you must, clean up only your own mess
+* Every changed line traces to the request. Don't "improve" adjacent code, comments or
+  formatting. Don't refactor what isn't broken. Match the existing style.
+* Remove imports/variables/functions that *your* change orphaned. Pre-existing dead code or
+  smells: mention them, don't touch them.
+
+### 5. Fix causes, not symptoms
+* Find the root cause before fixing. Don't paper over it with a retry, a sleep, a catch-all,
+  or a special case for the failing input.
+* Never weaken, skip or delete a test, or silence a warning, just to get green. If the test is
+  wrong, say so and why.
+
+### 6. Goal-driven execution — define success, loop until verified
+* Turn the task into a check:
+  "add validation" → tests for invalid input, then make them pass;
+  "fix the bug" → a test that reproduces it, then make it pass;
+  "refactor X" → tests green before and after.
+* Multi-step work: brief plan, each step with its check (`1. step → verify: check`).
+* Run the narrowest check that proves it (the touched project/test), wider only when the
+  change is cross-cutting.
+* Not done until the check ran. Report it straight: failed → say so with the output; skipped
+  → say so. Keep "verified" and "done but unverified" apart.
+
+**Working if:** diffs hold only what was asked, fewer rewrites from overcomplication, and
+questions come before implementation, not after mistakes.
