@@ -1,6 +1,6 @@
 ---
 name: roadmap
-description: Write an action plan / implementation roadmap / task list to D:\Joel\AIs\roadmaps. Use whenever the user asks for a plano de ação, roadmap, plano de implementação, lista de tasks/tarefas para implementar, breakdown of work, or types /roadmap.
+description: Write an action plan / implementation roadmap / task list to D:\Joel\AIs\roadmaps. Use whenever the user asks for a plano de ação, roadmap, plano de implementação, lista de tasks/tarefas para implementar, breakdown of work; also invoke with /roadmap (Claude Code) or $roadmap (Codex).
 ---
 
 # Roadmap
@@ -15,8 +15,8 @@ conversation — make it self-contained.
 
 Always this absolute path, regardless of cwd. `<project>` is the basename of
 the working directory the session was started in. Create the directory if it
-does not exist. If the D: drive is unavailable, fall back to the session
-scratchpad and say so. If a roadmap for the same work already exists, update
+does not exist. If access is blocked, report that exact problem instead of
+writing the roadmap elsewhere. If a roadmap for the same work already exists, update
 it in place (keep checked items, adjust the rest) rather than creating a
 second file.
 
@@ -69,4 +69,4 @@ How to verify the whole thing works end to end (commands, tests, manual checks).
 - Planning only: do not start implementing unless the user asks.
 - When the user later asks to execute the roadmap, tick tasks (`[x]`) in the
   file as they are completed and verified.
-- After writing, print the path and a short summary of the phases.
+- After writing, report the path and a short summary of the phases.

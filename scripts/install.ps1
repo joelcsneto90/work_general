@@ -1,20 +1,29 @@
 <#
 .SYNOPSIS
-  Installs pieces of work_general into a Claude Code config dir (default: ~/.claude).
+  Installs pieces of work_general into the user-level config of Claude Code (default) or Codex (-Codex).
 
 .DESCRIPTION
-  - Instructions: writes @imports (pointing at this repo) inside a marked block of CLAUDE.md.
+  Claude Code (~/.claude):
+  - Instructions: @imports (pointing at this repo) inside a marked block of CLAUDE.md.
   - Skills:       directory junctions ~/.claude/skills/<name> -> repo/skills/<name> (no admin needed).
   - Agents:       copies repo/agents/<name>.md into ~/.claude/agents/.
-  - Statusline:   merges entries into settings.json, pointing at this repo.
-  Anything replaced is backed up to <ClaudeDir>/backups/work_general-<timestamp>/.
-  Re-running is idempotent.
+  - Statusline:   merges statusLine + refresh hooks into settings.json, pointing at this repo.
+
+  Codex (~/.codex, with -Codex):
+  - Instructions: module contents concatenated into a marked block of AGENTS.md (Codex has no
+                  @import, so re-run after a git pull).
+  - Skills:       same junctions, into ~/.codex/skills/ (agents/openai.yaml in a skill is Codex metadata).
+  - Agents:       skipped (Codex agents use a different TOML format).
+  - Statusline:   sets [tui] status_line in config.toml from statusline/codex-status-line.json
+                  (Codex only supports built-in items, no custom script).
+
+  Anything replaced is backed up to <Dir>/backups/work_general-<timestamp>/. Re-running is idempotent.
 
 .EXAMPLE
   ./scripts/install.ps1 -List
   ./scripts/install.ps1 -All
+  ./scripts/install.ps1 -All -Codex
   ./scripts/install.ps1 -Instructions communication,coding-discipline -Skills handoff
-  ./scripts/install.ps1 -Statusline
 #>
 [CmdletBinding()]
 param(
@@ -23,17 +32,19 @@ param(
   [string[]]$Skills = @(),
   [string[]]$Agents = @(),
   [switch]$Statusline,
+  [switch]$Codex,
   [switch]$List,
-  [string]$ClaudeDir = (Join-Path $HOME '.claude')
+  [string]$Dir = (Join-Path $HOME $(if ($Codex) { '.codex' } else { '.claude' }))
 )
 
 $ErrorActionPreference = 'Stop'
 $Repo      = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $RepoFwd   = $Repo -replace '\\', '/'
 $Stamp     = Get-Date -Format 'yyyyMMdd-HHmmss'
-$BackupDir = Join-Path $ClaudeDir "backups/work_general-$Stamp"
+$BackupDir = Join-Path $Dir "backups/work_general-$Stamp"
 $Begin     = '<!-- work_general:begin -->'
 $End       = '<!-- work_general:end -->'
+$Tool      = if ($Codex) { 'Codex' } else { 'Claude Code' }
 
 $available = @{
   Instructions = @(Get-ChildItem (Join-Path $Repo 'instructions') -Filter *.md | ForEach-Object BaseName)
@@ -46,7 +57,7 @@ if ($List) {
   foreach ($k in 'Instructions', 'Skills', 'Agents') {
     "${k}: " + ($(if ($available[$k].Count) { $available[$k] -join ', ' } else { '(none)' }))
   }
-  'Extras: -Statusline'
+  'Extras: -Statusline   Target: -Codex (default: Claude Code)'
   return
 }
 
@@ -63,39 +74,52 @@ function Assert-Known([string]$kind, [string[]]$names) {
 }
 
 function Backup([string]$path) {
-  $rel  = [IO.Path]::GetRelativePath($ClaudeDir, $path)
+  $rel  = [IO.Path]::GetRelativePath($Dir, $path)
   $dest = Join-Path $BackupDir $rel
   New-Item -ItemType Directory -Force (Split-Path $dest) | Out-Null
   Copy-Item $path $dest -Recurse -Force
   "  backup: $dest"
 }
 
-New-Item -ItemType Directory -Force $ClaudeDir | Out-Null
+# Writes $text to $path only if it changed, backing up the previous version.
+function Write-IfChanged([string]$path, [string]$text) {
+  $old = if (Test-Path $path) { Get-Content $path -Raw } else { $null }
+  if ($old -eq $text) { return }
+  if ($null -ne $old) { Backup $path }
+  Set-Content $path $text -NoNewline
+}
+
+"Target: $Tool ($Dir)"
+New-Item -ItemType Directory -Force $Dir | Out-Null
 
 # ── Instructions ──────────────────────────────────────────────────────────────
 if ($Instructions.Count) {
   Assert-Known 'Instructions' $Instructions
-  $md = Join-Path $ClaudeDir 'CLAUDE.md'
-  $content = if (Test-Path $md) { Get-Content $md -Raw } else { '' }
-  $imports = $Instructions | ForEach-Object { "@$RepoFwd/instructions/$_.md" }
-  $block = (@($Begin) + $imports + @($End)) -join "`n"
-  $pattern = [regex]::Escape($Begin) + '[\s\S]*?' + [regex]::Escape($End)
-  if ($content -match $pattern) {
-    $new = [regex]::Replace($content, $pattern, $block)
+  if ($Codex) {
+    $md = Join-Path $Dir 'AGENTS.md'
+    $body = @("<!-- generated from $RepoFwd — edit there, then re-run install.ps1 -Codex -->") +
+      ($Instructions | ForEach-Object { (Get-Content (Join-Path $Repo "instructions/$_.md") -Raw).Trim() })
+    $inner = $body -join "`n`n"
   } else {
-    $new = ($content.TrimEnd() + "`n`n$block`n").TrimStart()
+    $md = Join-Path $Dir 'CLAUDE.md'
+    $inner = ($Instructions | ForEach-Object { "@$RepoFwd/instructions/$_.md" }) -join "`n"
   }
-  if ($new -ne $content) {
-    if (Test-Path $md) { Backup $md }
-    Set-Content $md $new -NoNewline
+  $block   = "$Begin`n$inner`n$End"
+  $content = if (Test-Path $md) { Get-Content $md -Raw } else { '' }
+  $pattern = [regex]::Escape($Begin) + '[\s\S]*?' + [regex]::Escape($End)
+  $new = if ($content -match $pattern) {
+    [regex]::Replace($content, $pattern, { $block })
+  } else {
+    ($content.TrimEnd() + "`n`n$block`n").TrimStart()
   }
+  Write-IfChanged $md $new
   "Instructions -> $md : $($Instructions -join ', ')"
 }
 
 # ── Skills (junctions) ────────────────────────────────────────────────────────
 if ($Skills.Count) {
   Assert-Known 'Skills' $Skills
-  $skillsDir = Join-Path $ClaudeDir 'skills'
+  $skillsDir = Join-Path $Dir 'skills'
   New-Item -ItemType Directory -Force $skillsDir | Out-Null
   foreach ($s in $Skills) {
     $target = Join-Path $Repo "skills/$s"
@@ -111,26 +135,52 @@ if ($Skills.Count) {
   }
 }
 
-# ── Agents (copies) ───────────────────────────────────────────────────────────
+# ── Agents (copies, Claude Code only) ─────────────────────────────────────────
 if ($Agents.Count) {
   Assert-Known 'Agents' $Agents
-  $agentsDir = Join-Path $ClaudeDir 'agents'
-  New-Item -ItemType Directory -Force $agentsDir | Out-Null
-  foreach ($a in $Agents) {
-    $src  = Join-Path $Repo "agents/$a.md"
-    $dest = Join-Path $agentsDir "$a.md"
-    if (Test-Path $dest) {
-      if ((Get-FileHash $src).Hash -eq (Get-FileHash $dest).Hash) { "Agent $a up to date"; continue }
-      Backup $dest
+  if ($Codex) {
+    "Agents skipped for Codex (different format): $($Agents -join ', ')"
+  } else {
+    $agentsDir = Join-Path $Dir 'agents'
+    New-Item -ItemType Directory -Force $agentsDir | Out-Null
+    foreach ($a in $Agents) {
+      $src  = Join-Path $Repo "agents/$a.md"
+      $dest = Join-Path $agentsDir "$a.md"
+      if (Test-Path $dest) {
+        if ((Get-FileHash $src).Hash -eq (Get-FileHash $dest).Hash) { "Agent $a up to date"; continue }
+        Backup $dest
+      }
+      Copy-Item $src $dest -Force
+      "Agent $a -> $dest"
     }
-    Copy-Item $src $dest -Force
-    "Agent $a -> $dest"
   }
 }
 
-# ── settings.json (statusline) ────────────────────────────────────────────────
-if ($Statusline) {
-  $settingsPath = Join-Path $ClaudeDir 'settings.json'
+# ── Statusline ────────────────────────────────────────────────────────────────
+if ($Statusline -and $Codex) {
+  $configPath = Join-Path $Dir 'config.toml'
+  $items = Get-Content (Join-Path $Repo 'statusline/codex-status-line.json') -Raw | ConvertFrom-Json
+  $line  = "status_line = [`n" + (($items | ForEach-Object { "  `"$_`"," }) -join "`n") + "`n]"
+  $toml  = if (Test-Path $configPath) { Get-Content $configPath -Raw } else { '' }
+  # [tui] section body = everything up to the next table header.
+  $tui = [regex]::Match($toml, '(?ms)^\[tui\][ \t]*\r?\n(.*?)(?=^\[|\z)')
+  if (-not $tui.Success) {
+    $new = ($toml.TrimEnd() + "`n`n[tui]`n$line`n").TrimStart()
+  } else {
+    $section = $tui.Groups[1]
+    $existing = [regex]::Match($section.Value, '(?ms)^status_line\s*=\s*\[.*?\]')
+    $newSection = if ($existing.Success) {
+      $section.Value.Remove($existing.Index, $existing.Length).Insert($existing.Index, $line)
+    } else {
+      "$line`n" + $section.Value
+    }
+    $new = $toml.Remove($section.Index, $section.Length).Insert($section.Index, $newSection)
+  }
+  Write-IfChanged $configPath $new
+  "Statusline -> $configPath [tui] status_line"
+}
+elseif ($Statusline) {
+  $settingsPath = Join-Path $Dir 'settings.json'
   $settings = if (Test-Path $settingsPath) { Get-Content $settingsPath -Raw | ConvertFrom-Json -AsHashtable } else { @{} }
   if (-not $settings.ContainsKey('hooks')) { $settings.hooks = [ordered]@{} }
 
@@ -147,12 +197,9 @@ if ($Statusline) {
   foreach ($evt in 'UserPromptSubmit', 'PreToolUse', 'PostToolUse', 'Stop') {
     Set-Hook $evt 'statusline.js' @{ hooks = @(@{ type = 'command'; command = $cmd }) }
   }
-  "Statusline -> $settingsPath"
 
-  $before = if (Test-Path $settingsPath) { (Get-Content $settingsPath -Raw).TrimEnd() } else { '' }
   $after  = $settings | ConvertTo-Json -Depth 20
-  if ($after -ne $before) {
-    if (Test-Path $settingsPath) { Backup $settingsPath }
-    Set-Content $settingsPath $after
-  }
+  $before = if (Test-Path $settingsPath) { (Get-Content $settingsPath -Raw).TrimEnd() } else { '' }
+  if ($after -ne $before) { Write-IfChanged $settingsPath "$after`n" }
+  "Statusline -> $settingsPath"
 }

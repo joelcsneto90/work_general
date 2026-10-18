@@ -1,0 +1,7 @@
+interface:
+  display_name: "Handoff"
+  short_description: "Create a manual task handoff document"
+  default_prompt: "Use $handoff to create a self-contained handoff for this task."
+
+policy:
+  allow_implicit_invocation: false

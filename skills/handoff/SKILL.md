@@ -1,9 +1,13 @@
 ---
 name: handoff
-description: Write an explicit session handoff document to D:\Joel\AIs\handoffs so work can resume in a fresh session. Use ONLY when the user explicitly asks for a handoff (or types /handoff) — never automatically, never on compaction. Around 70% context you may suggest it once in one line, but do not write it unless asked.
+description: Write an explicit session handoff document to D:\Joel\AIs\handoffs so work can resume in a fresh session. Use ONLY when the user explicitly asks for a handoff (/handoff in Claude Code, $handoff in Codex) — never automatically, never on compaction. Around 70% context you may suggest it once in one line, but do not write it unless asked.
 ---
 
 # Handoff
+
+Run only on an explicit request. Never infer one from compaction, `/compact`,
+`/reset`, `/clear`, low remaining context, long-running or unfinished work, or
+the end of a task.
 
 Produce a self-contained state document. The reader is a fresh session with
 **zero** memory of this conversation — assume nothing.
@@ -16,8 +20,8 @@ Always this absolute path, regardless of cwd. `<project>` is the basename of
 the working directory the session was started in, so handoffs from different
 projects stay distinguishable in one shared folder.
 
-Create the directory if it does not exist. If the D: drive is unavailable,
-fall back to the session scratchpad and say so. If an unfinished handoff for
+Create the directory if it does not exist. If access is blocked, report that
+exact problem instead of writing the handoff elsewhere. If an unfinished handoff for
 the same work already exists, update it in place rather than creating a
 second file.
 
@@ -64,4 +68,4 @@ ambiguities and what assumption is currently in play.
 - Prefer file paths + line numbers over re-pasting code.
 - Anything durable about the *user* or their preferences goes to memory, not
   just the handoff.
-- After writing, print the path and the resume prompt to the terminal.
+- After writing, report the path and the resume prompt to the user.

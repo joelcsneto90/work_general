@@ -1,0 +1,7 @@
+interface:
+  display_name: "Roadmap"
+  short_description: "Write an action plan / task roadmap to D:\Joel\AIs\roadmaps"
+  default_prompt: "Use $roadmap to write an implementation roadmap for this work."
+
+policy:
+  allow_implicit_invocation: true

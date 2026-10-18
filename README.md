@@ -1,8 +1,8 @@
 # work_general
 
-Instruções, skills, agents e configurações do Claude Code que valem para **todos** os meus
-projetos — comportamento do Claude, boas práticas e como trabalhar comigo. Nada específico de
-linguagem ou stack: isso fica no `CLAUDE.md` de cada projeto.
+Instruções, skills, agents e configurações do Claude Code **e do Codex** que valem para
+**todos** os meus projetos — comportamento do agente, boas práticas e como trabalhar comigo.
+Nada específico de linguagem ou stack: isso fica no `CLAUDE.md`/`AGENTS.md` de cada projeto.
 
 Cada peça é independente: instalo tudo ou só o que interessa.
 
@@ -13,7 +13,7 @@ Cada peça é independente: instalo tudo ou só o que interessa.
 | `instructions/` | Módulos de instruções, importados via `@` no `CLAUDE.md` |
 | `skills/` | Skills globais (`handoff`, `roadmap`, `web-fetch-spa`) |
 | `agents/` | Subagents globais (vazio por enquanto) |
-| `statusline/` | Status line personalizada (`statusline.js`, só Node built-in) |
+| `statusline/` | Status line do Claude (`statusline.js`, só Node built-in) e preset do Codex (`codex-status-line.json`) |
 | `scripts/install.ps1` | Instalador seletivo |
 
 ### Módulos de instruções
@@ -30,12 +30,17 @@ Cada peça é independente: instalo tudo ou só o que interessa.
 
 ```powershell
 ./scripts/install.ps1 -List                     # o que está disponível
-./scripts/install.ps1 -All                      # tudo
+./scripts/install.ps1 -All                      # tudo no Claude Code (~/.claude)
+./scripts/install.ps1 -All -Codex               # tudo no Codex (~/.codex)
 ./scripts/install.ps1 -Instructions communication,coding-discipline -Skills handoff,roadmap
 ./scripts/install.ps1 -Statusline
 ```
 
-Como cada coisa é instalada (sempre com backup em `~/.claude/backups/work_general-<timestamp>/`):
+Sem `-Codex` o alvo é o Claude Code. `-Dir` troca a pasta de destino.
+
+### Claude Code
+
+Sempre com backup em `~/.claude/backups/work_general-<timestamp>/`:
 
 - **Instruções** → bloco `<!-- work_general:begin/end -->` no `~/.claude/CLAUDE.md` com
   `@D:/.../instructions/<módulo>.md`. O resto do arquivo não é tocado. Rodar de novo substitui
@@ -46,6 +51,21 @@ Como cada coisa é instalada (sempre com backup em `~/.claude/backups/work_gener
 
 Instruções, skills e statusline apontam direto para o repo, então um `git pull` já
 atualiza. Agents são copiados: rode o install de novo depois do pull.
+
+### Codex (`-Codex`)
+
+Backup em `~/.codex/backups/work_general-<timestamp>/`:
+
+- **Instruções** → o Codex não tem `@import`, então o conteúdo dos módulos é **concatenado** no
+  bloco marcado do `~/.codex/AGENTS.md`. Depois de um `git pull`, rode `install.ps1 -Codex` de
+  novo.
+- **Skills** → mesmas junctions, em `~/.codex/skills/`. A mesma pasta serve aos dois:
+  `agents/openai.yaml` é metadado do Codex (invocação `$handoff`, implícita ou não) e o Claude
+  ignora.
+- **Agents** → ignorados (o Codex usa outro formato, TOML).
+- **Statusline** → o Codex não aceita script, só itens prontos. O `[tui] status_line` do
+  `config.toml` é preenchido com a lista de `statusline/codex-status-line.json`; o resto do
+  arquivo não é tocado.
 
 ### Usar só em um projeto
 
