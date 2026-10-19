@@ -15,6 +15,7 @@ Cada peça é independente: instalo tudo ou só o que interessa.
 | `agents/` | Subagents globais (vazio por enquanto) |
 | `statusline/` | Status line do Claude (`statusline.js`, só Node built-in) e preset do Codex (`codex-status-line.json`) |
 | `scripts/install.ps1` | Instalador seletivo |
+| `scripts/vscode-profile.ps1` | Perfis do VS Code por stack (extensões, settings base, associação de workspace) |
 
 ### Módulos de instruções
 
@@ -76,6 +77,41 @@ No `CLAUDE.md` do projeto, importe só os módulos que fazem sentido:
 ```
 
 Se o módulo já estiver importado no `~/.claude/CLAUDE.md` global, não precisa repetir no projeto.
+
+## Perfis do VS Code
+
+Extensões são por **perfil**: um workspace só consegue *recomendar* extensões
+(`extensions.recommendations`), e habilitar/desabilitar por workspace é só pela UI, sem arquivo
+versionável. Por isso cada stack tem um perfil, e o workspace é associado a ele.
+
+| Perfil | Extensões (além de Claude Code + VS Keybindings, em todos) |
+| --- | --- |
+| `default` | — |
+| `dotnet` | .NET Install Tool, C#, C# Dev Kit |
+| `angular` | ESLint, Prettier, HTML CSS Support, Path Intellisense, Angular Language Service |
+| `react` | ESLint, Prettier, HTML CSS Support, Path Intellisense, ES7+ React snippets |
+
+TypeScript, JavaScript, HTML e CSS já vêm no VS Code.
+
+Perfil **não herda** do Default: cada um tem settings, atalhos e snippets próprios (vazios ao
+criar), a não ser que use os do Default (`useDefaultFlags`). O `-ShareDefault` liga isso para
+settings, keybindings, snippets, tasks, prompts e MCP — só as extensões ficam por perfil. Os
+settings base (`workbench.sideBar.location: right`, tema `Visual Studio Dark`,
+`claudeCode.preferredLocation: sidebar`) vão no `settings.json` do Default; as outras chaves não
+são tocadas.
+
+```powershell
+./scripts/vscode-profile.ps1 -Name default,dotnet,angular,react             # cria o que falta e sincroniza
+./scripts/vscode-profile.ps1 -Name angular -Open D:\path\Projeto.code-workspace   # + associa o workspace
+./scripts/vscode-profile.ps1 -ShareDefault                                  # VS Code fechado
+```
+
+O `-ShareDefault` exige o VS Code fechado (ele regrava o `storage.json` ao sair) e faz backup
+antes. Perfil novo abre uma janela vazia na criação: o CLI só instala em perfil que já existe,
+e só cria abrindo uma janela; depois rode o `-ShareDefault`. Layout das views (ex.: arrastar o
+Claude Code para a barra da direita) é estado de UI do perfil e não é compartilhado. Para lista
+de extensões ou settings base, edite `$Always`, `$BaseSettings`, `$Shared` e `$Profiles` no
+script.
 
 ## Adicionando coisas
 
