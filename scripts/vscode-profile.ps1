@@ -22,6 +22,7 @@
   ./scripts/vscode-profile.ps1 -Name dotnet -Open D:\path\Project.code-workspace
   ./scripts/vscode-profile.ps1 -ShareDefault     # with VS Code closed
 #>
+#Requires -Version 7
 [CmdletBinding()]
 param(
   [ValidateSet('default', 'dotnet', 'angular', 'react')]
@@ -31,10 +32,20 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$UserDir = Join-Path $env:APPDATA 'Code\User'
-$StoragePath = Join-Path $UserDir 'globalStorage\storage.json'
+$UserDir = if ($IsWindows) {
+  Join-Path $env:APPDATA 'Code/User'
+} else {
+  Join-Path ($env:XDG_CONFIG_HOME ?? (Join-Path $HOME '.config')) 'Code/User'
+}
+$StoragePath = Join-Path $UserDir 'globalStorage/storage.json'
 
-$Always = @('anthropic.claude-code', 'ms-vscode.vs-keybindings')
+# GitHub Copilot is built into VS Code; nothing to install for it.
+$Always = @(
+  'anthropic.claude-code',
+  'ms-vscode.vs-keybindings',
+  'ms-vscode.vscode-node-azure-pack',
+  'ms-azuretools.vscode-bicep'
+)
 
 $BaseSettings = [ordered]@{
   'workbench.sideBar.location'   = 'right'
@@ -62,7 +73,7 @@ $Profiles = @{
 }
 
 if ($ShareDefault) {
-  if (Get-Process Code -ErrorAction SilentlyContinue) { throw 'Close VS Code first: it rewrites storage.json on exit.' }
+  if (Get-Process code -ErrorAction SilentlyContinue) { throw 'Close VS Code first: it rewrites storage.json on exit.' }
   Copy-Item $StoragePath "$StoragePath.bak-$(Get-Date -Format yyyyMMdd-HHmmss)"
   $storage = Get-Content $StoragePath -Raw | ConvertFrom-Json -AsHashtable
   $flags = [ordered]@{}
@@ -81,7 +92,7 @@ function Test-Profile([string]$p) { -not ((code --list-extensions @(ProfileArgs 
 
 # Text edit instead of a JSON round-trip: settings.json is JSONC and may hold comments.
 function Set-BaseSettings([string]$path) {
-  $text = Get-Content $path -Raw
+  $text = if (Test-Path $path) { Get-Content $path -Raw } else { "{`n}`n" }
   foreach ($key in $BaseSettings.Keys) {
     $value = $BaseSettings[$key] | ConvertTo-Json
     $pattern = '"' + [regex]::Escape($key) + '"\s*:\s*"[^"]*"'

@@ -84,7 +84,7 @@ Extensões são por **perfil**: um workspace só consegue *recomendar* extensõe
 (`extensions.recommendations`), e habilitar/desabilitar por workspace é só pela UI, sem arquivo
 versionável. Por isso cada stack tem um perfil, e o workspace é associado a ele.
 
-| Perfil | Extensões (além de Claude Code + VS Keybindings, em todos) |
+| Perfil | Extensões (além de Claude Code, VS Keybindings, Azure Tools pack e Bicep, em todos; Copilot já vem no VS Code) |
 | --- | --- |
 | `default` | — |
 | `dotnet` | .NET Install Tool, C#, C# Dev Kit |
@@ -106,7 +106,8 @@ são tocadas.
 ./scripts/vscode-profile.ps1 -ShareDefault                                  # VS Code fechado
 ```
 
-O `-ShareDefault` exige o VS Code fechado (ele regrava o `storage.json` ao sair) e faz backup
+Roda no Windows e no Linux (PowerShell 7 `pwsh` e o comando `code` no PATH; no Linux usa
+`~/.config/Code/User`). O `-ShareDefault` exige o VS Code fechado (ele regrava o `storage.json` ao sair) e faz backup
 antes. Perfil novo abre uma janela vazia na criação: o CLI só instala em perfil que já existe,
 e só cria abrindo uma janela; depois rode o `-ShareDefault`. Layout das views (ex.: arrastar o
 Claude Code para a barra da direita) é estado de UI do perfil e não é compartilhado. Para lista
