@@ -24,6 +24,8 @@ stack-specific rules. Bias toward caution over speed; for trivial tasks, use jud
 ### 4. Surgical changes — touch only what you must, clean up only your own mess
 * Every changed line traces to the request. Don't "improve" adjacent code, comments or
   formatting. Don't refactor what isn't broken. Match the existing style.
+* Before changing an existing member/contract/config, find its usages; if the change alters
+  behavior for callers outside the request, say so first.
 * Remove imports/variables/functions that *your* change orphaned. Pre-existing dead code or
   smells: mention them, don't touch them.
 
