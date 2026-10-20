@@ -30,6 +30,8 @@ stack-specific rules. Bias toward caution over speed; for trivial tasks, use jud
 ### 5. Fix causes, not symptoms
 * Find the root cause before fixing. Don't paper over it with a retry, a sleep, a catch-all,
   or a special case for the failing input.
+* Debugging: find a similar flow that works and list the differences before changing anything.
+* 3 failed fix attempts → stop and question the approach with me; no 4th try.
 * Never weaken, skip or delete a test, or silence a warning, just to get green. If the test is
   wrong, say so and why.
 
@@ -43,6 +45,9 @@ stack-specific rules. Bias toward caution over speed; for trivial tasks, use jud
   change is cross-cutting.
 * Not done until the check ran. Report it straight: failed → say so with the output; skipped
   → say so. Keep "verified" and "done but unverified" apart.
+* Evidence = fresh check output + the diff. A subagent's or tool's "done" is not evidence.
+* A regression test must fail without the fix (red → green), or it proves nothing.
+* "Requirement met" = checked item by item against the acceptance criteria, not just "tests pass".
 
 **Working if:** diffs hold only what was asked, fewer rewrites from overcomplication, and
 questions come before implementation, not after mistakes.

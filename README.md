@@ -11,7 +11,7 @@ Cada peça é independente: instalo tudo ou só o que interessa.
 | Pasta | Conteúdo |
 | --- | --- |
 | `instructions/` | Módulos de instruções, importados via `@` no `CLAUDE.md` |
-| `skills/` | Skills globais (`handoff`, `roadmap`, `web-fetch-spa`) |
+| `skills/` | Skills globais (`handoff`, `roadmap`, `execute-roadmap`, `web-fetch-spa`) |
 | `agents/` | Subagents globais (vazio por enquanto) |
 | `statusline/` | Status line do Claude (`statusline.js`, só Node built-in) e preset do Codex (`codex-status-line.json`) |
 | `scripts/install.ps1` | Instalador seletivo |
@@ -22,10 +22,19 @@ Cada peça é independente: instalo tudo ou só o que interessa.
 | Módulo | O que cobre |
 | --- | --- |
 | `communication` | Voz enxuta inspirada no caveman (sem cerimônia, resposta primeiro, explica sem palestra), idioma, franqueza |
-| `coding-discipline` | Karpathy geral + extras: pensar antes, ler antes de escrever, simplicidade, mudanças cirúrgicas, causa raiz, metas verificáveis |
+| `coding-discipline` | Karpathy geral + extras: pensar antes, ler antes de escrever, simplicidade, mudanças cirúrgicas, causa raiz, metas verificáveis; extras de debug/verificação do superpowers |
 | `files-and-output` | Diretório temp `D:\Joel\AIs\temp`, pastas de handoff/roadmap, configs e secrets |
 | `tooling` | Excluir `bin/obj/node_modules` em buscas no shell, SPA via Playwright, ambiente Windows |
-| `sessions` | Handoff só quando pedido, roadmap, memória |
+| `sessions` | Handoff só quando pedido, roadmap e sua execução, memória |
+
+### Skills
+
+| Skill | Uso |
+| --- | --- |
+| `handoff` | Handoff de sessão em `D:\Joel\AIs\handoffs`, só quando pedido |
+| `roadmap` | Plano de implementação em `D:\Joel\AIs\roadmaps` (só planeja) |
+| `execute-roadmap` | Executa um roadmap task a task: pré-scan de dependências, inline ou subagent por task, revisão independente, verificação do "Done when", rulings no arquivo. Versão enxuta do `subagent-driven-development` do [obra/superpowers](https://github.com/obra/superpowers) |
+| `web-fetch-spa` | Renderiza páginas SPA/JS com Playwright |
 
 ## Instalação
 

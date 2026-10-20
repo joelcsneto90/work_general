@@ -33,31 +33,31 @@ plan, ask; otherwise pick a sensible default and record it as an assumption.
 # Roadmap: <name>
 Date: <YYYY-MM-DD> | Project: <project> | Status: <draft | approved | in progress | done>
 
-## Objetivo
+## Goal
 What we want to achieve and why. One paragraph.
 
-## Escopo
+## Scope
 - In: ...
 - Out: ...
 
-## Premissas & decisões
+## Assumptions & decisions
 Assumptions in play and decisions made (with rejected alternatives).
 
-## Fases / Tasks
-### Fase 1 — <name>
+## Phases / Tasks
+### Phase 1 — <name>
 - [ ] **T1.1 <task title>** — what to do
   - Files: `path/to/file.ext`
   - Done when: <verifiable acceptance criterion>
   - Depends on: <task ids, or none>
 - [ ] **T1.2 ...**
 
-### Fase 2 — <name>
+### Phase 2 — <name>
 ...
 
-## Riscos & questões em aberto
+## Risks & open questions
 Risks, unknowns, access/credentials needed, and what would change the plan.
 
-## Validação
+## Validation
 How to verify the whole thing works end to end (commands, tests, manual checks).
 ```
 
@@ -65,8 +65,8 @@ How to verify the whole thing works end to end (commands, tests, manual checks).
 
 - Each task small enough for one focused session, with a verifiable "done when".
 - Order by dependency; the first task should be immediately executable.
-- Write in the user's language (default Portuguese for headings/content).
+- Write in the user's language (default Portuguese), headings included. Keep the task labels
+  `Files` / `Done when` / `Depends on` as-is: `execute-roadmap` reads them.
 - Planning only: do not start implementing unless the user asks.
-- When the user later asks to execute the roadmap, tick tasks (`[x]`) in the
-  file as they are completed and verified.
+- Executing it later is the `execute-roadmap` skill's job.
 - After writing, report the path and a short summary of the phases.

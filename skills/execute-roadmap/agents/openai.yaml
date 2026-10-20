@@ -1,0 +1,7 @@
+interface:
+  display_name: "Execute roadmap"
+  short_description: "Execute a roadmap task by task with review and verification"
+  default_prompt: "Use $execute-roadmap to implement the next tasks of this roadmap."
+
+policy:
+  allow_implicit_invocation: true
