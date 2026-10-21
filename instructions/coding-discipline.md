@@ -16,7 +16,10 @@ stack-specific rules. Bias toward caution over speed; for trivial tasks, use jud
 
 ### 3. Simplicity first — minimum code, nothing speculative
 * No features, options, flexibility or configurability beyond what was asked.
-* No abstraction for single-use code.
+* No abstraction for single-use code. But when a change adds a second variant of existing
+  behavior (mode, version, layout, provider) and the choice between them would be checked in
+  more than one place, model the variant as an object selected once. One branch in one place
+  is fine. Check: grep the new flag/condition; 2+ hits → extract.
 * No error handling, null-guards, fallbacks or "just in case" calls for cases that can't
   happen. If upstream guarantees a value, trust it.
 * 200 lines that could be 50? Rewrite. Test: would a senior engineer call it overcomplicated?
