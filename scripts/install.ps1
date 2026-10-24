@@ -1,6 +1,7 @@
 <#
 .SYNOPSIS
-  Installs pieces of work_general into the user-level config of Claude Code (default) or Codex (-Codex).
+  Installs pieces of work_general into the user-level config of Claude Code (default), Codex (-Codex)
+  or GitHub Copilot (-Copilot).
 
 .DESCRIPTION
   Claude Code (~/.claude):
@@ -17,12 +18,21 @@
   - Statusline:   sets [tui] status_line in config.toml from statusline/codex-status-line.json
                   (Codex only supports built-in items, no custom script).
 
+  GitHub Copilot (~/.copilot, with -Copilot; read by both Copilot CLI and VS Code):
+  - Instructions: module contents concatenated into a marked block of copilot-instructions.md
+                  (@ references can't point outside the repo, so re-run after a git pull).
+  - Skills:       same junctions, into ~/.copilot/skills/.
+  - Agents:       skipped (Copilot agents use a different *.agent.md format).
+  - Statusline:   merges the footer.show* flags of statusline/copilot-footer.json into settings.json
+                  (Copilot CLI built-in footer items; the Claude script reads Claude-only data).
+
   Anything replaced is backed up to <Dir>/backups/work_general-<timestamp>/. Re-running is idempotent.
 
 .EXAMPLE
   ./scripts/install.ps1 -List
   ./scripts/install.ps1 -All
   ./scripts/install.ps1 -All -Codex
+  ./scripts/install.ps1 -All -Copilot
   ./scripts/install.ps1 -Instructions communication,coding-discipline -Skills handoff
 #>
 [CmdletBinding()]
@@ -33,18 +43,20 @@ param(
   [string[]]$Agents = @(),
   [switch]$Statusline,
   [switch]$Codex,
+  [switch]$Copilot,
   [switch]$List,
-  [string]$Dir = (Join-Path $HOME $(if ($Codex) { '.codex' } else { '.claude' }))
+  [string]$Dir = (Join-Path $HOME $(if ($Codex) { '.codex' } elseif ($Copilot) { '.copilot' } else { '.claude' }))
 )
 
 $ErrorActionPreference = 'Stop'
+if ($Codex -and $Copilot) { throw 'Use -Codex or -Copilot, not both (one target per run).' }
 $Repo      = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $RepoFwd   = $Repo -replace '\\', '/'
 $Stamp     = Get-Date -Format 'yyyyMMdd-HHmmss'
 $BackupDir = Join-Path $Dir "backups/work_general-$Stamp"
 $Begin     = '<!-- work_general:begin -->'
 $End       = '<!-- work_general:end -->'
-$Tool      = if ($Codex) { 'Codex' } else { 'Claude Code' }
+$Tool      = if ($Codex) { 'Codex' } elseif ($Copilot) { 'GitHub Copilot' } else { 'Claude Code' }
 
 $available = @{
   Instructions = @(Get-ChildItem (Join-Path $Repo 'instructions') -Filter *.md | ForEach-Object BaseName)
@@ -57,7 +69,7 @@ if ($List) {
   foreach ($k in 'Instructions', 'Skills', 'Agents') {
     "${k}: " + ($(if ($available[$k].Count) { $available[$k] -join ', ' } else { '(none)' }))
   }
-  'Extras: -Statusline   Target: -Codex (default: Claude Code)'
+  'Extras: -Statusline   Target: -Codex | -Copilot (default: Claude Code)'
   return
 }
 
@@ -95,9 +107,10 @@ New-Item -ItemType Directory -Force $Dir | Out-Null
 # ── Instructions ──────────────────────────────────────────────────────────────
 if ($Instructions.Count) {
   Assert-Known 'Instructions' $Instructions
-  if ($Codex) {
-    $md = Join-Path $Dir 'AGENTS.md'
-    $body = @("<!-- generated from $RepoFwd — edit there, then re-run install.ps1 -Codex -->") +
+  if ($Codex -or $Copilot) {
+    $md   = Join-Path $Dir $(if ($Codex) { 'AGENTS.md' } else { 'copilot-instructions.md' })
+    $flag = if ($Codex) { '-Codex' } else { '-Copilot' }
+    $body = @("<!-- generated from $RepoFwd — edit there, then re-run install.ps1 $flag -->") +
       ($Instructions | ForEach-Object { (Get-Content (Join-Path $Repo "instructions/$_.md") -Raw).Trim() })
     $inner = $body -join "`n`n"
   } else {
@@ -138,8 +151,8 @@ if ($Skills.Count) {
 # ── Agents (copies, Claude Code only) ─────────────────────────────────────────
 if ($Agents.Count) {
   Assert-Known 'Agents' $Agents
-  if ($Codex) {
-    "Agents skipped for Codex (different format): $($Agents -join ', ')"
+  if ($Codex -or $Copilot) {
+    "Agents skipped for $Tool (different format): $($Agents -join ', ')"
   } else {
     $agentsDir = Join-Path $Dir 'agents'
     New-Item -ItemType Directory -Force $agentsDir | Out-Null
@@ -178,6 +191,18 @@ if ($Statusline -and $Codex) {
   }
   Write-IfChanged $configPath $new
   "Statusline -> $configPath [tui] status_line"
+}
+elseif ($Statusline -and $Copilot) {
+  $settingsPath = Join-Path $Dir 'settings.json'
+  $settings = if (Test-Path $settingsPath) { Get-Content $settingsPath -Raw | ConvertFrom-Json -AsHashtable } else { @{} }
+  if (-not $settings.ContainsKey('footer')) { $settings.footer = [ordered]@{} }
+  $flags = Get-Content (Join-Path $Repo 'statusline/copilot-footer.json') -Raw | ConvertFrom-Json -AsHashtable
+  foreach ($k in $flags.Keys) { $settings.footer[$k] = $flags[$k] }
+
+  $after  = $settings | ConvertTo-Json -Depth 20
+  $before = if (Test-Path $settingsPath) { (Get-Content $settingsPath -Raw).TrimEnd() } else { '' }
+  if ($after -ne $before) { Write-IfChanged $settingsPath "$after`n" }
+  "Statusline -> $settingsPath footer"
 }
 elseif ($Statusline) {
   $settingsPath = Join-Path $Dir 'settings.json'

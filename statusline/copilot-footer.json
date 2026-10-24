@@ -1,0 +1,8 @@
+{
+  "showModelEffort": true,
+  "showContextWindow": true,
+  "showQuota": true,
+  "showBranch": true,
+  "showDirectory": true,
+  "showCodeChanges": true
+}

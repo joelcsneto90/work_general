@@ -1,8 +1,9 @@
 # work_general
 
-Instruções, skills, agents e configurações do Claude Code **e do Codex** que valem para
-**todos** os meus projetos — comportamento do agente, boas práticas e como trabalhar comigo.
-Nada específico de linguagem ou stack: isso fica no `CLAUDE.md`/`AGENTS.md` de cada projeto.
+Instruções, skills, agents e configurações do Claude Code, do Codex **e do GitHub Copilot**
+(CLI e VS Code) que valem para **todos** os meus projetos — comportamento do agente, boas
+práticas e como trabalhar comigo. Nada específico de linguagem ou stack: isso fica no
+`CLAUDE.md`/`AGENTS.md`/`.github/copilot-instructions.md` de cada projeto.
 
 Cada peça é independente: instalo tudo ou só o que interessa.
 
@@ -10,10 +11,10 @@ Cada peça é independente: instalo tudo ou só o que interessa.
 
 | Pasta | Conteúdo |
 | --- | --- |
-| `instructions/` | Módulos de instruções, importados via `@` no `CLAUDE.md` |
+| `instructions/` | Módulos de instruções (importados via `@` no Claude, concatenados no Codex/Copilot) |
 | `skills/` | Skills globais (`handoff`, `roadmap`, `execute-roadmap`, `web-fetch-spa`) |
 | `agents/` | Subagents globais (vazio por enquanto) |
-| `statusline/` | Status line do Claude (`statusline.js`, só Node built-in) e preset do Codex (`codex-status-line.json`) |
+| `statusline/` | Status line do Claude (`statusline.js`, só Node built-in), preset do Codex (`codex-status-line.json`) e do footer do Copilot CLI (`copilot-footer.json`) |
 | `scripts/install.ps1` | Instalador seletivo |
 | `scripts/vscode-profile.ps1` | Perfis do VS Code por stack (extensões, settings base, associação de workspace) |
 
@@ -42,11 +43,13 @@ Cada peça é independente: instalo tudo ou só o que interessa.
 ./scripts/install.ps1 -List                     # o que está disponível
 ./scripts/install.ps1 -All                      # tudo no Claude Code (~/.claude)
 ./scripts/install.ps1 -All -Codex               # tudo no Codex (~/.codex)
+./scripts/install.ps1 -All -Copilot             # tudo no Copilot CLI + VS Code (~/.copilot)
 ./scripts/install.ps1 -Instructions communication,coding-discipline -Skills handoff,roadmap
 ./scripts/install.ps1 -Statusline
 ```
 
-Sem `-Codex` o alvo é o Claude Code. `-Dir` troca a pasta de destino.
+Sem `-Codex`/`-Copilot` o alvo é o Claude Code; um alvo por execução (para os três, rode três
+vezes). `-Dir` troca a pasta de destino.
 
 ### Claude Code
 
@@ -76,6 +79,23 @@ Backup em `~/.codex/backups/work_general-<timestamp>/`:
 - **Statusline** → o Codex não aceita script, só itens prontos. O `[tui] status_line` do
   `config.toml` é preenchido com a lista de `statusline/codex-status-line.json`; o resto do
   arquivo não é tocado.
+
+### GitHub Copilot (`-Copilot`)
+
+O `~/.copilot` é lido pelo Copilot CLI e pelo Copilot Chat do VS Code. Backup em
+`~/.copilot/backups/work_general-<timestamp>/`:
+
+- **Instruções** → conteúdo dos módulos **concatenado** no bloco marcado do
+  `~/.copilot/copilot-instructions.md` (o `@` do Copilot só aceita arquivos dentro do repo ou da
+  pasta de instruções, não caminho absoluto). Depois de um `git pull`, rode `install.ps1 -Copilot`
+  de novo.
+- **Skills** → mesmas junctions, em `~/.copilot/skills/`. O VS Code também lê
+  `~/.claude/skills`, então lá as skills já aparecem só com a instalação do Claude.
+- **Agents** → ignorados (o Copilot usa outro formato, `*.agent.md`).
+- **Statusline** → o script do Claude depende de dados só do Claude (conta, limites, modo), então
+  não serve aqui. Os flags `footer.show*` de `statusline/copilot-footer.json` (effort, contexto,
+  quota, branch, diretório, linhas alteradas) entram no `~/.copilot/settings.json`; as outras
+  chaves não são tocadas. Só afeta o CLI.
 
 ### Usar só em um projeto
 
