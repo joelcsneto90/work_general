@@ -54,5 +54,13 @@ stack-specific rules. Bias toward caution over speed; for trivial tasks, use jud
 * A regression test must fail without the fix (red → green), or it proves nothing.
 * "Requirement met" = checked item by item against the acceptance criteria, not just "tests pass".
 
+### 7. Cheap by construction — fewest round-trips, fewest passes
+* I/O (database, HTTP, filesystem, queue): no call inside a loop; batch it or load the set once
+  up front. Validations and logic that need the same record load it once and reuse it, instead of
+  querying again per check.
+* In-memory collections: don't chain passes that one pass covers naturally (filter before map;
+  combine when the language has an idiom for it). Fusing passes at the cost of readability is
+  only worth it on hot paths or large collections; otherwise readability wins (section 3).
+
 **Working if:** diffs hold only what was asked, fewer rewrites from overcomplication, and
 questions come before implementation, not after mistakes.

@@ -23,7 +23,7 @@ Cada peça é independente: instalo tudo ou só o que interessa.
 | Módulo | O que cobre |
 | --- | --- |
 | `communication` | Voz enxuta inspirada no caveman (sem cerimônia, resposta primeiro, explica sem palestra), idioma, franqueza |
-| `coding-discipline` | Karpathy geral + extras: pensar antes, ler antes de escrever, simplicidade, mudanças cirúrgicas, causa raiz, metas verificáveis; extras de debug/verificação do superpowers |
+| `coding-discipline` | Karpathy geral + extras: pensar antes, ler antes de escrever, simplicidade, mudanças cirúrgicas, causa raiz, metas verificáveis, poucos round-trips de I/O e poucas passadas; extras de debug/verificação do superpowers |
 | `files-and-output` | Diretório temp `D:\Joel\AIs\temp\<projeto>`, pastas de handoff/roadmap, configs e secrets |
 | `tooling` | Excluir `bin/obj/node_modules` em buscas no shell, SPA via Playwright, ambiente Windows |
 | `sessions` | Handoff só quando pedido, roadmap e sua execução, memória |
@@ -33,8 +33,8 @@ Cada peça é independente: instalo tudo ou só o que interessa.
 | Skill | Uso |
 | --- | --- |
 | `handoff` | Handoff de sessão em `D:\Joel\AIs\handoffs`, só quando pedido |
-| `roadmap` | Plano de implementação em `D:\Joel\AIs\roadmaps` (só planeja) |
-| `execute-roadmap` | Executa um roadmap task a task: pré-scan de dependências, inline ou subagent por task, revisão independente, verificação do "Done when", rulings no arquivo. Versão enxuta do `subagent-driven-development` do [obra/superpowers](https://github.com/obra/superpowers) |
+| `roadmap` | Plano de implementação em `D:\Joel\AIs\roadmaps` (só planeja), com loop de crítica do plano e `Revisit if` por decisão |
+| `execute-roadmap` | Executa um roadmap task a task: pré-scan de dependências, inline ou subagent por task, revisão independente (spec, qualidade, abordagem), verificação do "Done when", comportamento como fonte da verdade em migrações, rulings e lições no arquivo, propostas de instrução no fim. Versão enxuta do `subagent-driven-development` do [obra/superpowers](https://github.com/obra/superpowers) |
 | `web-fetch-spa` | Renderiza páginas SPA/JS com Playwright |
 
 ## Instalação

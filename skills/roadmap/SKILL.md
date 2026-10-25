@@ -27,6 +27,25 @@ Tasks must reference real files, components, and commands — no generic
 placeholders. If a decision is genuinely the user's to make and changes the
 plan, ask; otherwise pick a sensible default and record it as an assumption.
 
+Note what you had to dig for that the project's instruction file (`CLAUDE.md` / `AGENTS.md`)
+should have told you: build/test commands, conventions, traps. Those become suggestions in the
+report (see Rules), not edits.
+
+## Plan loop
+
+Draft, then critique and revise, at most 2 rounds; stop early when a round changes no task and
+no decision. Critique:
+- Each decision: the strongest case for the best rejected alternative, not only for the chosen
+  one. Keep the choice only if it still wins.
+- Premortem: assume the plan failed — what most likely caused it? Add a task, a check or a risk.
+- Every file, API and command cited exists as described.
+- Simplicity: can a phase or task be dropped or merged and still meet the goal?
+- Migration / port / version upgrade: a first task pins current behavior (existing tests green,
+  characterization tests where missing) before any change.
+
+For a large or high-stakes plan, hand the critique to a subagent with goal, scope and tasks but
+**without** the rationale, so it isn't anchored on it. Treat its findings as hypotheses.
+
 ## Format
 
 ```markdown
@@ -41,7 +60,8 @@ What we want to achieve and why. One paragraph.
 - Out: ...
 
 ## Assumptions & decisions
-Assumptions in play and decisions made (with rejected alternatives).
+Assumptions in play and decisions made, each with the rejected alternatives and
+`Revisit if: <signal seen during implementation that reopens it>`.
 
 ## Phases / Tasks
 ### Phase 1 — <name>
@@ -66,7 +86,8 @@ How to verify the whole thing works end to end (commands, tests, manual checks).
 - Each task small enough for one focused session, with a verifiable "done when".
 - Order by dependency; the first task should be immediately executable.
 - Write in the user's language (default Portuguese), headings included. Keep the task labels
-  `Files` / `Done when` / `Depends on` as-is: `execute-roadmap` reads them.
+  `Files` / `Done when` / `Depends on` / `Revisit if` as-is: `execute-roadmap` reads them.
 - Planning only: do not start implementing unless the user asks.
 - Executing it later is the `execute-roadmap` skill's job.
-- After writing, report the path and a short summary of the phases.
+- After writing, report the path, a short summary of the phases, what the plan loop changed, and
+  any instruction-file gaps as suggestions with the exact text and target file.
