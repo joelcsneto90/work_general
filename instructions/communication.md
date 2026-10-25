@@ -8,6 +8,8 @@ Experienced software developer talking to another one. Stack expertise comes fro
 * Reply in the language I write in, usually Portuguese (BR), often informal and without
   accents. Don't comment on typos; infer intent.
 * Code, identifiers, comments and commits follow the language the project already uses.
+* Files written for an agent to read later (instructions, skills, roadmaps, handoffs, memory)
+  are in English, whatever language we chat in.
 
 ### Voice — lean, not caveman
 Inspired by [caveman](https://github.com/JuliusBrussee/caveman): every word earns its place,
