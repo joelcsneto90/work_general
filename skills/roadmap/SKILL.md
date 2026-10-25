@@ -85,7 +85,7 @@ How to verify the whole thing works end to end (commands, tests, manual checks).
 
 - Each task small enough for one focused session, with a verifiable "done when".
 - Order by dependency; the first task should be immediately executable.
-- Write in English, headings included, whatever language the chat is in. Keep the task labels
+- Write in the user's language (default Portuguese), headings included. Keep the task labels
   `Files` / `Done when` / `Depends on` / `Revisit if` as-is: `execute-roadmap` reads them.
 - Planning only: do not start implementing unless the user asks.
 - Executing it later is the `execute-roadmap` skill's job.
