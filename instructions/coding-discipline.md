@@ -55,9 +55,11 @@ stack-specific rules. Bias toward caution over speed; for trivial tasks, use jud
 * "Requirement met" = checked item by item against the acceptance criteria, not just "tests pass".
 
 ### 7. Cheap by construction — fewest round-trips, fewest passes
-* I/O (database, HTTP, filesystem, queue): no call inside a loop; batch it or load the set once
-  up front. Validations and logic that need the same record load it once and reuse it, instead of
-  querying again per check.
+* Boundary crossings — any call that costs far more than local work: database, network/HTTP,
+  disk, IPC, syscalls, GPU/driver, another process or thread. Never one per item, per render,
+  per frame or per event when one batched call covers them; a loop is anything that repeats,
+  not just a `for`. Make the call only when needed, and don't repeat one whose result you
+  already hold in scope: load once, reuse.
 * In-memory collections: don't chain passes that one pass covers naturally (filter before map;
   combine when the language has an idiom for it). Fusing passes at the cost of readability is
   only worth it on hot paths or large collections; otherwise readability wins (section 3).
