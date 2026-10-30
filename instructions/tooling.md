@@ -11,6 +11,10 @@
   looks login-gated, don't conclude it's unreadable. Use the `web-fetch-spa` skill (Playwright
   with the installed Chrome) first, then judge.
 
+### Git
+* New branches: `feature/jn_{ShortWorkDescription}`, a short camelCase description of the work
+  (e.g. `feature/jn_portalBusinessBranchView`), unless I give the name.
+
 ### Environment
 * Windows machine; both PowerShell and Git Bash are available. Use each with its own syntax.
 * Don't download large tooling (browsers, SDKs) when something already installed can do the job.
