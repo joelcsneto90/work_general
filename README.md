@@ -24,7 +24,7 @@ Cada peça é independente: instalo tudo ou só o que interessa.
 | --- | --- |
 | `communication` | Voz enxuta inspirada no caveman (sem cerimônia, resposta primeiro, explica sem palestra), idioma, franqueza |
 | `coding-discipline` | Karpathy geral + extras: pensar antes, ler antes de escrever, simplicidade, mudanças cirúrgicas, causa raiz, metas verificáveis, poucos round-trips de I/O e poucas passadas; extras de debug/verificação do superpowers |
-| `files-and-output` | Diretório temp `D:\Joel\AIs\temp\<projeto>`, pastas de handoff/roadmap, configs e secrets |
+| `files-and-output` | Diretório temp `~/Documents/AIs/temp/<projeto>`, pastas de handoff/roadmap, configs e secrets |
 | `tooling` | Excluir `bin/obj/node_modules` em buscas no shell, SPA via Playwright, nome de branch `feature/jn_*`, ambiente Windows |
 | `sessions` | Handoff só quando pedido, roadmap e sua execução, memória |
 | `dictionary` | Dicionário global das minhas expressões (`macfe`, `ccp`, …); complementado pelo `<repo>/dictionary.md` de cada projeto |
@@ -33,8 +33,8 @@ Cada peça é independente: instalo tudo ou só o que interessa.
 
 | Skill | Uso |
 | --- | --- |
-| `handoff` | Handoff de sessão em `D:\Joel\AIs\handoffs`, só quando pedido |
-| `roadmap` | Plano de implementação em `D:\Joel\AIs\roadmaps` (só planeja), com loop de crítica do plano e `Revisit if` por decisão |
+| `handoff` | Handoff de sessão em `~/Documents/AIs/handoffs`, só quando pedido |
+| `roadmap` | Plano de implementação em `~/Documents/AIs/roadmaps` (só planeja), com loop de crítica do plano e `Revisit if` por decisão |
 | `execute-roadmap` | Executa um roadmap task a task: pré-scan de dependências, inline ou subagent por task, revisão independente (spec, qualidade, abordagem), verificação do "Done when", comportamento como fonte da verdade em migrações, rulings e lições no arquivo, propostas de instrução no fim. Versão enxuta do `subagent-driven-development` do [obra/superpowers](https://github.com/obra/superpowers) |
 | `web-fetch-spa` | Renderiza páginas SPA/JS com Playwright |
 
@@ -57,8 +57,8 @@ vezes). `-Dir` troca a pasta de destino.
 Sempre com backup em `~/.claude/backups/work_general-<timestamp>/`:
 
 - **Instruções** → bloco `<!-- work_general:begin/end -->` no `~/.claude/CLAUDE.md` com
-  `@D:/.../instructions/<módulo>.md`. O resto do arquivo não é tocado. Rodar de novo substitui
-  o bloco.
+  `@<caminho-do-clone>/instructions/<módulo>.md`. O resto do arquivo não é tocado.
+  Rodar de novo substitui o bloco.
 - **Skills** → junction `~/.claude/skills/<nome>` → `skills/<nome>` (não precisa de admin).
 - **Agents** → cópia para `~/.claude/agents/`.
 - **Statusline** → merge no `~/.claude/settings.json`, apontando para o script deste repo.
@@ -103,7 +103,7 @@ O `~/.copilot` é lido pelo Copilot CLI e pelo Copilot Chat do VS Code. Backup e
 No `CLAUDE.md` do projeto, importe só os módulos que fazem sentido:
 
 ```markdown
-@D:/Joel/repos/Joel/WorkGeneral/instructions/coding-discipline.md
+@<caminho-do-clone>/instructions/coding-discipline.md
 ```
 
 Se o módulo já estiver importado no `~/.claude/CLAUDE.md` global, não precisa repetir no projeto.

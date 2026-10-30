@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: Write an explicit session handoff document to D:\Joel\AIs\handoffs so work can resume in a fresh session. Use ONLY when the user explicitly asks for a handoff (/handoff in Claude Code, $handoff in Codex) — never automatically, never on compaction. Around 70% context you may suggest it once in one line, but do not write it unless asked.
+description: Write an explicit session handoff document to ~/Documents/AIs/handoffs so work can resume in a fresh session. Use ONLY when the user explicitly asks for a handoff (/handoff in Claude Code, $handoff in Codex) — never automatically, never on compaction. Around 70% context you may suggest it once in one line, but do not write it unless asked.
 ---
 
 # Handoff
@@ -14,9 +14,9 @@ Produce a self-contained state document. The reader is a fresh session with
 
 ## Where
 
-`D:\Joel\AIs\handoffs\YYYY-MM-DD-<project>-<short-slug>.md`
+`~/Documents/AIs/handoffs/YYYY-MM-DD-<project>-<short-slug>.md`
 
-Always this absolute path, regardless of cwd. `<project>` is the basename of
+Always this path, regardless of cwd (`~` = my home directory). `<project>` is the basename of
 the working directory the session was started in, so handoffs from different
 projects stay distinguishable in one shared folder.
 
