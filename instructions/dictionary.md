@@ -11,3 +11,4 @@ when the same term is in both, the project one wins.
 | --- | --- |
 | `macfe` | Checkout the main branch (`main`, `master` or `develop`, whichever the repo uses), pull to update it, then create and checkout a new branch from it, named per the branch-naming rule in Tooling → Git. Uncommitted changes → stop and ask before switching. |
 | `ccp` | Commit and push the current changes on the current branch. |
+| `marge` | Checkout the main branch (`main`, `master` or `develop`, whichever the repo uses), pull to update it, then checkout back to the branch I was on and merge the main branch into it. Uncommitted changes → stop and ask before switching. |
