@@ -51,6 +51,9 @@ $BaseSettings = [ordered]@{
   'workbench.sideBar.location'   = 'right'
   'workbench.colorTheme'         = 'Visual Studio Dark'
   'claudeCode.preferredLocation' = 'sidebar'
+  # Don't auto-attach the active editor file to Copilot chats (may be sensitive).
+  'chat.implicitContext.enabled' = [ordered]@{ panel = 'never'; 'editing-session' = 'never' }
+  'github.copilot.chat.agent.currentEditorContext.enabled' = $false
 }
 
 # Resources a profile takes from Default. Not extensions (the point of the profile) and not
