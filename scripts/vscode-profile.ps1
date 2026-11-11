@@ -54,6 +54,8 @@ $BaseSettings = [ordered]@{
   # Don't auto-attach the active editor file to Copilot chats (may be sensitive).
   'chat.implicitContext.enabled' = [ordered]@{ panel = 'never'; 'editing-session' = 'never' }
   'github.copilot.chat.agent.currentEditorContext.enabled' = $false
+  # Same for Claude Code. Application scope: user settings only, a workspace can't set it.
+  'claudeCode.attachOpenFile'    = $false
 }
 
 # Resources a profile takes from Default. Not extensions (the point of the profile) and not
@@ -97,8 +99,9 @@ function Test-Profile([string]$p) { -not ((code --list-extensions @(ProfileArgs 
 function Set-BaseSettings([string]$path) {
   $text = if (Test-Path $path) { Get-Content $path -Raw } else { "{`n}`n" }
   foreach ($key in $BaseSettings.Keys) {
-    $value = $BaseSettings[$key] | ConvertTo-Json
-    $pattern = '"' + [regex]::Escape($key) + '"\s*:\s*"[^"]*"'
+    $value = $BaseSettings[$key] | ConvertTo-Json -Compress
+    # Value: string, flat object, or scalar (bool/number).
+    $pattern = '"' + [regex]::Escape($key) + '"\s*:\s*("[^"]*"|\{[^{}]*\}|[^,\s}]+)'
     $text = if ($text -match $pattern) {
       [regex]::Replace($text, $pattern, "`"$key`": $value")
     } else {
