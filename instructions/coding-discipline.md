@@ -64,5 +64,16 @@ stack-specific rules. Bias toward caution over speed; for trivial tasks, use jud
   combine when the language has an idiom for it). Fusing passes at the cost of readability is
   only worth it on hot paths or large collections; otherwise readability wins (section 3).
 
+### 8. Logs tell the story — steps, not data
+* Reading only the logs of one execution, someone must be able to follow what it did: log each
+  step where the flow changes stage — about to call an external system, hand work off, or stop —
+  and its outcome.
+* One line per step, not per condition, branch or loop item. Every early exit that ends the flow
+  says why it stopped.
+* Log only the identifiers needed to find that execution and the entity it acted on — never
+  payloads, personal data or secrets.
+* Match the project's logging style (structured templates, levels); errors carry the exception
+  plus those identifiers.
+
 **Working if:** diffs hold only what was asked, fewer rewrites from overcomplication, and
 questions come before implementation, not after mistakes.
