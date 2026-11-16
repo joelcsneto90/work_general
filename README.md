@@ -24,7 +24,7 @@ Cada peça é independente: instalo tudo ou só o que interessa.
 | --- | --- |
 | `communication` | Voz enxuta inspirada no caveman (sem cerimônia, resposta primeiro, explica sem palestra), idioma, franqueza |
 | `coding-discipline` | Karpathy geral + extras: pensar antes, ler antes de escrever, simplicidade, mudanças cirúrgicas, causa raiz, metas verificáveis, poucos round-trips de I/O e poucas passadas; extras de debug/verificação do superpowers |
-| `files-and-output` | Diretório temp `~/Documents/AIs/temp/<projeto>`, pastas de handoff/roadmap, configs e secrets |
+| `files-and-output` | Diretório temp `D:/Joel/AIs/temp/<projeto>`, pastas de handoff/roadmap, configs e secrets |
 | `tooling` | Excluir `bin/obj/node_modules` em buscas no shell, SPA via Playwright, nome de branch `feature/jn_*`, ambiente Windows |
 | `sessions` | Handoff só quando pedido, roadmap e sua execução, memória |
 | `dictionary` | Dicionário global das minhas expressões (`macfe`, `ccp`, …); complementado pelo `<repo>/dictionary.md` de cada projeto |
