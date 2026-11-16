@@ -1,6 +1,6 @@
 ---
 name: roadmap
-description: Write an action plan / implementation roadmap / task list to ~/Documents/AIs/roadmaps. Use whenever the user asks for a plano de ação, roadmap, plano de implementação, lista de tasks/tarefas para implementar, breakdown of work; also invoke with /roadmap (Claude Code) or $roadmap (Codex).
+description: Write an action plan / implementation roadmap / task list to D:/Joel/AIs/roadmaps. Use whenever the user asks for a plano de ação, roadmap, plano de implementação, lista de tasks/tarefas para implementar, breakdown of work; also invoke with /roadmap (Claude Code) or $roadmap (Codex).
 ---
 
 # Roadmap
@@ -11,7 +11,7 @@ conversation — make it self-contained.
 
 ## Where
 
-`~/Documents/AIs/roadmaps/YYYY-MM-DD-<project>-<short-slug>.md`
+`D:/Joel/AIs/roadmaps/YYYY-MM-DD-<project>-<short-slug>.md`
 
 Always this path, regardless of cwd (`~` = my home directory). `<project>` is the basename of
 the working directory the session was started in. Create the directory if it

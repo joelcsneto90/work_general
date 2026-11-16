@@ -1,6 +1,6 @@
 ---
 name: execute-roadmap
-description: Execute a roadmap from ~/Documents/AIs/roadmaps task by task — dependency pre-scan, inline vs. subagent per task, independent review, fresh verification of each "Done when", ticking [x] and logging rulings in the file. Use when the user asks to executar/implementar o roadmap/plano or a range of its tasks; also /execute-roadmap (Claude Code) or $execute-roadmap (Codex).
+description: Execute a roadmap from D:/Joel/AIs/roadmaps task by task — dependency pre-scan, inline vs. subagent per task, independent review, fresh verification of each "Done when", ticking [x] and logging rulings in the file. Use when the user asks to executar/implementar o roadmap/plano or a range of its tasks; also /execute-roadmap (Claude Code) or $execute-roadmap (Codex).
 ---
 
 # Execute roadmap

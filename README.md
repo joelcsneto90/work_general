@@ -33,8 +33,8 @@ Cada peça é independente: instalo tudo ou só o que interessa.
 
 | Skill | Uso |
 | --- | --- |
-| `handoff` | Handoff de sessão em `~/Documents/AIs/handoffs`, só quando pedido |
-| `roadmap` | Plano de implementação em `~/Documents/AIs/roadmaps` (só planeja), com loop de crítica do plano e `Revisit if` por decisão |
+| `handoff` | Handoff de sessão em `D:/Joel/AIs/handoffs`, só quando pedido |
+| `roadmap` | Plano de implementação em `D:/Joel/AIs/roadmaps` (só planeja), com loop de crítica do plano e `Revisit if` por decisão |
 | `execute-roadmap` | Executa um roadmap task a task: pré-scan de dependências, inline ou subagent por task, revisão independente (spec, qualidade, abordagem), verificação do "Done when", comportamento como fonte da verdade em migrações, rulings e lições no arquivo, propostas de instrução no fim. Versão enxuta do `subagent-driven-development` do [obra/superpowers](https://github.com/obra/superpowers) |
 | `web-fetch-spa` | Renderiza páginas SPA/JS com Playwright |
 

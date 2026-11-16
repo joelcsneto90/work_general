@@ -23,8 +23,8 @@ result to be "here" or elsewhere, move/copy the final result there — scratch s
 intermediates still stay in `D:/Joel/AIs/temp/<project>/`.
 
 ### Shared output folders
-* Handoffs → `~/Documents/AIs/handoffs` (see the `handoff` skill).
-* Roadmaps / action plans → `~/Documents/AIs/roadmaps` (see the `roadmap` skill).
+* Handoffs → `D:/Joel/AIs/handoffs` (see the `handoff` skill).
+* Roadmaps / action plans → `D:/Joel/AIs/roadmaps` (see the `roadmap` skill).
 
 ### Configuration & secrets
 * Never commit real secrets. When a new config section is needed, add only its shape with
