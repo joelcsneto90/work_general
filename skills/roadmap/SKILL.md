@@ -34,7 +34,8 @@ report (see Rules), not edits.
 ## Plan loop
 
 Draft, then critique and revise, at most 2 rounds; stop early when a round changes no task and
-no decision. Critique:
+no decision. The loop runs on creation **and on every change** to an existing roadmap: re-critique
+the changed tasks and every task that depends on them or shares their files. Critique:
 - Each decision: the strongest case for the best rejected alternative, not only for the chosen
   one. Keep the choice only if it still wins.
 - Premortem: assume the plan failed — what most likely caused it? Add a task, a check or a risk.
@@ -43,8 +44,10 @@ no decision. Critique:
 - Migration / port / version upgrade: a first task pins current behavior (existing tests green,
   characterization tests where missing) before any change.
 
-For a large or high-stakes plan, hand the critique to a subagent with goal, scope and tasks but
-**without** the rationale, so it isn't anchored on it. Treat its findings as hypotheses.
+When the plan has 2+ phases or touches 2+ flows/components, an independent critique is mandatory,
+not a judgment call: hand it to a subagent with goal, scope and tasks but **without** the
+rationale, so it isn't anchored on it. Treat its findings as hypotheses. If the tool can't spawn
+subagents, say so in the report instead of skipping silently.
 
 ## Format
 
