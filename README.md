@@ -11,7 +11,7 @@ Cada peça é independente: instalo tudo ou só o que interessa.
 
 | Pasta | Conteúdo |
 | --- | --- |
-| `instructions/` | Módulos de instruções (importados via `@` no Claude, concatenados no Codex/Copilot) |
+| `instructions/` | Módulos de instruções (copiados e importados via `@` no Claude, concatenados no Codex/Copilot) |
 | `skills/` | Skills globais (`handoff`, `roadmap`, `execute-roadmap`, `web-fetch-spa`) |
 | `agents/` | Subagents globais (vazio por enquanto) |
 | `statusline/` | Status line do Claude (`statusline.js`, só Node built-in), preset do Codex (`codex-status-line.json`) e do footer do Copilot CLI (`copilot-footer.json`) |
@@ -52,28 +52,31 @@ Cada peça é independente: instalo tudo ou só o que interessa.
 Sem `-Codex`/`-Copilot` o alvo é o Claude Code; um alvo por execução (para os três, rode três
 vezes). `-Dir` troca a pasta de destino.
 
+Tudo é **copiado**: o diretório global passa a pertencer à máquina e nada lá aponta para este
+repo (nem junction, nem `@import`, nem caminho). Assim dá para ajustar algo só numa máquina sem
+afetar os outros clones, e uma mudança aqui só chega numa máquina quando o install roda nela de
+novo — o que sobrescreve as cópias locais, com backup.
+
 ### Claude Code
 
 Sempre com backup em `~/.claude/backups/work_general-<timestamp>/`:
 
-- **Instruções** → bloco `<!-- work_general:begin/end -->` no `~/.claude/CLAUDE.md` com
-  `@<caminho-do-clone>/instructions/<módulo>.md`. O resto do arquivo não é tocado.
+- **Instruções** → cópia para `~/.claude/instructions/<módulo>.md` + bloco
+  `<!-- work_general:begin/end -->` no `~/.claude/CLAUDE.md` com
+  `@~/.claude/instructions/<módulo>.md` (caminho absoluto). O resto do arquivo não é tocado.
   Rodar de novo substitui o bloco.
-- **Skills** → junction `~/.claude/skills/<nome>` → `skills/<nome>` (não precisa de admin).
+- **Skills** → cópia para `~/.claude/skills/<nome>` (junctions antigas são trocadas pela cópia).
 - **Agents** → cópia para `~/.claude/agents/`.
-- **Statusline** → merge no `~/.claude/settings.json`, apontando para o script deste repo.
-
-Instruções, skills e statusline apontam direto para o repo, então um `git pull` já
-atualiza. Agents são copiados: rode o install de novo depois do pull.
+- **Statusline** → cópia para `~/.claude/statusline.js` + merge no `~/.claude/settings.json`,
+  apontando para essa cópia.
 
 ### Codex (`-Codex`)
 
 Backup em `~/.codex/backups/work_general-<timestamp>/`:
 
 - **Instruções** → o Codex não tem `@import`, então o conteúdo dos módulos é **concatenado** no
-  bloco marcado do `~/.codex/AGENTS.md`. Depois de um `git pull`, rode `install.ps1 -Codex` de
-  novo.
-- **Skills** → mesmas junctions, em `~/.codex/skills/`. A mesma pasta serve aos dois:
+  bloco marcado do `~/.codex/AGENTS.md`.
+- **Skills** → mesmas cópias, em `~/.codex/skills/`. A mesma pasta serve aos dois:
   `agents/openai.yaml` é metadado do Codex (invocação `$handoff`, implícita ou não) e o Claude
   ignora.
 - **Agents** → ignorados (o Codex usa outro formato, TOML).
@@ -88,9 +91,8 @@ O `~/.copilot` é lido pelo Copilot CLI e pelo Copilot Chat do VS Code. Backup e
 
 - **Instruções** → conteúdo dos módulos **concatenado** no bloco marcado do
   `~/.copilot/copilot-instructions.md` (o `@` do Copilot só aceita arquivos dentro do repo ou da
-  pasta de instruções, não caminho absoluto). Depois de um `git pull`, rode `install.ps1 -Copilot`
-  de novo.
-- **Skills** → mesmas junctions, em `~/.copilot/skills/`. O VS Code também lê
+  pasta de instruções, não caminho absoluto).
+- **Skills** → mesmas cópias, em `~/.copilot/skills/`. O VS Code também lê
   `~/.claude/skills`, então lá as skills já aparecem só com a instalação do Claude.
 - **Agents** → ignorados (o Copilot usa outro formato, `*.agent.md`).
 - **Statusline** → o script do Claude depende de dados só do Claude (conta, limites, modo), então
@@ -103,7 +105,7 @@ O `~/.copilot` é lido pelo Copilot CLI e pelo Copilot Chat do VS Code. Backup e
 No `CLAUDE.md` do projeto, importe só os módulos que fazem sentido:
 
 ```markdown
-@<caminho-do-clone>/instructions/coding-discipline.md
+@~/.claude/instructions/coding-discipline.md
 ```
 
 Se o módulo já estiver importado no `~/.claude/CLAUDE.md` global, não precisa repetir no projeto.

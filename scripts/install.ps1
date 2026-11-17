@@ -4,24 +4,30 @@
   or GitHub Copilot (-Copilot).
 
 .DESCRIPTION
+  Everything is COPIED into the target dir, which then belongs to the machine: nothing installed
+  points back at this repo, so local edits there stay local, and a change here only reaches a
+  machine when install.ps1 is re-run on it (which overwrites the copies, backing them up first).
+
   Claude Code (~/.claude):
-  - Instructions: @imports (pointing at this repo) inside a marked block of CLAUDE.md.
-  - Skills:       directory junctions ~/.claude/skills/<name> -> repo/skills/<name> (no admin needed).
+  - Instructions: copies modules into ~/.claude/instructions/ and @imports them in a marked block
+                  of CLAUDE.md.
+  - Skills:       copies repo/skills/<name> into ~/.claude/skills/<name> (replaces old junctions).
   - Agents:       copies repo/agents/<name>.md into ~/.claude/agents/.
-  - Statusline:   merges statusLine + refresh hooks into settings.json, pointing at this repo.
+  - Statusline:   copies statusline.js into ~/.claude/ and merges statusLine + refresh hooks into
+                  settings.json, pointing at that copy.
 
   Codex (~/.codex, with -Codex):
   - Instructions: module contents concatenated into a marked block of AGENTS.md (Codex has no
-                  @import, so re-run after a git pull).
-  - Skills:       same junctions, into ~/.codex/skills/ (agents/openai.yaml in a skill is Codex metadata).
+                  @import).
+  - Skills:       same copies, into ~/.codex/skills/ (agents/openai.yaml in a skill is Codex metadata).
   - Agents:       skipped (Codex agents use a different TOML format).
   - Statusline:   sets [tui] status_line in config.toml from statusline/codex-status-line.json
                   (Codex only supports built-in items, no custom script).
 
   GitHub Copilot (~/.copilot, with -Copilot; read by both Copilot CLI and VS Code):
   - Instructions: module contents concatenated into a marked block of copilot-instructions.md
-                  (@ references can't point outside the repo, so re-run after a git pull).
-  - Skills:       same junctions, into ~/.copilot/skills/.
+                  (@ references can't point outside the repo).
+  - Skills:       same copies, into ~/.copilot/skills/.
   - Agents:       skipped (Copilot agents use a different *.agent.md format).
   - Statusline:   merges the footer.show* flags of statusline/copilot-footer.json into settings.json
                   (Copilot CLI built-in footer items; the Claude script reads Claude-only data).
@@ -51,7 +57,7 @@ param(
 $ErrorActionPreference = 'Stop'
 if ($Codex -and $Copilot) { throw 'Use -Codex or -Copilot, not both (one target per run).' }
 $Repo      = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$RepoFwd   = $Repo -replace '\\', '/'
+$DirFwd    = $Dir -replace '\\', '/'
 $Stamp     = Get-Date -Format 'yyyyMMdd-HHmmss'
 $BackupDir = Join-Path $Dir "backups/work_general-$Stamp"
 $Begin     = '<!-- work_general:begin -->'
@@ -101,6 +107,21 @@ function Write-IfChanged([string]$path, [string]$text) {
   Set-Content $path $text -NoNewline
 }
 
+# Copies $src over $dest only if it changed, backing up the previous version. Returns $true if copied.
+function Copy-IfChanged([string]$src, [string]$dest) {
+  if ((Test-Path $dest) -and (Get-FileHash $src).Hash -eq (Get-FileHash $dest).Hash) { return $false }
+  if (Test-Path $dest) { Backup $dest | Out-Host }
+  New-Item -ItemType Directory -Force (Split-Path $dest) | Out-Null
+  Copy-Item $src $dest -Force
+  return $true
+}
+
+function Get-TreeHash([string]$path) {
+  (Get-ChildItem $path -Recurse -File -Force | Sort-Object FullName | ForEach-Object {
+    [IO.Path]::GetRelativePath($path, $_.FullName) + ':' + (Get-FileHash $_.FullName).Hash
+  }) -join "`n"
+}
+
 "Target: $Tool ($Dir)"
 New-Item -ItemType Directory -Force $Dir | Out-Null
 
@@ -110,12 +131,15 @@ if ($Instructions.Count) {
   if ($Codex -or $Copilot) {
     $md   = Join-Path $Dir $(if ($Codex) { 'AGENTS.md' } else { 'copilot-instructions.md' })
     $flag = if ($Codex) { '-Codex' } else { '-Copilot' }
-    $body = @("<!-- generated from $RepoFwd — edit there, then re-run install.ps1 $flag -->") +
+    $body = @("<!-- installed by work_general install.ps1 ${flag}: machine copy, edit here; a reinstall overwrites it (with backup) -->") +
       ($Instructions | ForEach-Object { (Get-Content (Join-Path $Repo "instructions/$_.md") -Raw).Trim() })
     $inner = $body -join "`n`n"
   } else {
     $md = Join-Path $Dir 'CLAUDE.md'
-    $inner = ($Instructions | ForEach-Object { "@$RepoFwd/instructions/$_.md" }) -join "`n"
+    foreach ($i in $Instructions) {
+      [void](Copy-IfChanged (Join-Path $Repo "instructions/$i.md") (Join-Path $Dir "instructions/$i.md"))
+    }
+    $inner = ($Instructions | ForEach-Object { "@$DirFwd/instructions/$_.md" }) -join "`n"
   }
   $block   = "$Begin`n$inner`n$End"
   $content = if (Test-Path $md) { Get-Content $md -Raw } else { '' }
@@ -129,22 +153,24 @@ if ($Instructions.Count) {
   "Instructions -> $md : $($Instructions -join ', ')"
 }
 
-# ── Skills (junctions) ────────────────────────────────────────────────────────
+# ── Skills (copies) ───────────────────────────────────────────────────────────
 if ($Skills.Count) {
   Assert-Known 'Skills' $Skills
   $skillsDir = Join-Path $Dir 'skills'
   New-Item -ItemType Directory -Force $skillsDir | Out-Null
   foreach ($s in $Skills) {
-    $target = Join-Path $Repo "skills/$s"
-    $link   = Join-Path $skillsDir $s
-    $item   = Get-Item $link -Force -ErrorAction SilentlyContinue
-    if ($item -and $item.LinkType -and $item.Target -eq $target) { "Skill $s already linked"; continue }
-    if ($item) {
-      if (-not $item.LinkType) { Backup $link }
-      Remove-Item $link -Recurse -Force
+    $src  = Join-Path $Repo "skills/$s"
+    $dest = Join-Path $skillsDir $s
+    $item = Get-Item $dest -Force -ErrorAction SilentlyContinue
+    if ($item -and $item.LinkType) {
+      $item.Delete()  # old junction into the repo: removes the link only, never its target
+    } elseif ($item) {
+      if ((Get-TreeHash $src) -eq (Get-TreeHash $dest)) { "Skill $s up to date"; continue }
+      Backup $dest
+      Remove-Item $dest -Recurse -Force
     }
-    New-Item -ItemType Junction -Path $link -Target $target | Out-Null
-    "Skill $s -> $link"
+    Copy-Item $src $dest -Recurse
+    "Skill $s -> $dest"
   }
 }
 
@@ -157,14 +183,8 @@ if ($Agents.Count) {
     $agentsDir = Join-Path $Dir 'agents'
     New-Item -ItemType Directory -Force $agentsDir | Out-Null
     foreach ($a in $Agents) {
-      $src  = Join-Path $Repo "agents/$a.md"
       $dest = Join-Path $agentsDir "$a.md"
-      if (Test-Path $dest) {
-        if ((Get-FileHash $src).Hash -eq (Get-FileHash $dest).Hash) { "Agent $a up to date"; continue }
-        Backup $dest
-      }
-      Copy-Item $src $dest -Force
-      "Agent $a -> $dest"
+      if (Copy-IfChanged (Join-Path $Repo "agents/$a.md") $dest) { "Agent $a -> $dest" } else { "Agent $a up to date" }
     }
   }
 }
@@ -209,7 +229,7 @@ elseif ($Statusline) {
   $settings = if (Test-Path $settingsPath) { Get-Content $settingsPath -Raw | ConvertFrom-Json -AsHashtable } else { @{} }
   if (-not $settings.ContainsKey('hooks')) { $settings.hooks = [ordered]@{} }
 
-  # Drops any previous entry for this script (old ~/.claude path or this repo), then appends ours.
+  # Drops any previous entry for this script (any path, e.g. an old one into the repo), then appends ours.
   function Set-Hook([string]$evt, [string]$marker, [hashtable]$entry) {
     $list = @($settings.hooks[$evt] | Where-Object { $_ } | Where-Object {
       -not ($_.hooks | Where-Object { $_.command -like "*$marker*" })
@@ -217,7 +237,8 @@ elseif ($Statusline) {
     $settings.hooks[$evt] = @($list + $entry)
   }
 
-  $cmd = "node `"$RepoFwd/statusline/statusline.js`""
+  [void](Copy-IfChanged (Join-Path $Repo 'statusline/statusline.js') (Join-Path $Dir 'statusline.js'))
+  $cmd = "node `"$DirFwd/statusline.js`""
   $settings.statusLine = [ordered]@{ type = 'command'; command = $cmd; padding = 2 }
   foreach ($evt in 'UserPromptSubmit', 'PreToolUse', 'PostToolUse', 'Stop') {
     Set-Hook $evt 'statusline.js' @{ hooks = @(@{ type = 'command'; command = $cmd }) }
