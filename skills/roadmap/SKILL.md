@@ -11,11 +11,11 @@ conversation — make it self-contained.
 
 ## Where
 
-`D:/Joel/AIs/roadmaps/YYYY-MM-DD-<project>-<short-slug>.md`
+`D:/Joel/AIs/roadmaps/<project>/YYYY-MM-DD-<short-slug>.md`
 
-Always this path, regardless of cwd (`~` = my home directory). `<project>` is the basename of
-the working directory the session was started in. Create the directory if it
-does not exist. If access is blocked, report that exact problem instead of
+Always this path, regardless of cwd (`~` = my home directory). `<project>` is the lowercase
+basename of the repo the work is about, decided by the task, not the cwd; work not tied to any
+repository → `_general`. Create the directory if it does not exist. If access is blocked, report that exact problem instead of
 writing the roadmap elsewhere. If a roadmap for the same work already exists, update
 it in place (keep checked items, adjust the rest) rather than creating a
 second file.

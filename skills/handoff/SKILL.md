@@ -14,11 +14,11 @@ Produce a self-contained state document. The reader is a fresh session with
 
 ## Where
 
-`D:/Joel/AIs/handoffs/YYYY-MM-DD-<project>-<short-slug>.md`
+`D:/Joel/AIs/handoffs/<project>/YYYY-MM-DD-<short-slug>.md`
 
-Always this path, regardless of cwd (`~` = my home directory). `<project>` is the basename of
-the working directory the session was started in, so handoffs from different
-projects stay distinguishable in one shared folder.
+Always this path, regardless of cwd (`~` = my home directory). `<project>` is the lowercase
+basename of the repo the work is about, decided by the task, not the cwd; work not tied to any
+repository → `_general`.
 
 Create the directory if it does not exist. If access is blocked, report that
 exact problem instead of writing the handoff elsewhere. If an unfinished handoff for
