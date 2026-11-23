@@ -56,6 +56,10 @@ $BaseSettings = [ordered]@{
   'github.copilot.chat.agent.currentEditorContext.enabled' = $false
   # Same for Claude Code. Application scope: user settings only, a workspace can't set it.
   'claudeCode.attachOpenFile'    = $false
+  # Source Control as a folder tree with compacted single-child folders, like Visual Studio's Git Changes.
+  'scm.defaultViewMode'          = 'tree'
+  'scm.compactFolders'           = $true
+  'scm.defaultViewSortKey'       = 'path'
 }
 
 # Resources a profile takes from Default. Not extensions (the point of the profile) and not

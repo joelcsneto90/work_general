@@ -39,6 +39,13 @@ try { raw = fs.readFileSync(0, "utf8"); } catch (_) {}
 let d = {};
 try { d = JSON.parse(raw); } catch (_) {}
 
+// ── Feed do ClaudeStatus ─────────────────────────────────────────────────────
+// Contexto % e rate limits so existem neste payload; o painel nao os ve de fora.
+// Ignora payload de hook sozinho. Falha em silencio: nunca derruba a statusline.
+try {
+  require("D:/Joel/repos/Joel/ClaudeStatus/statusline-feed.js").recordStatuslinePayload(d);
+} catch (_) {}
+
 // ── Hook mode ────────────────────────────────────────────────────────────────
 if (d.hook_event_name || (d.permission_mode && !d.model)) {
   if (d.permission_mode) {
