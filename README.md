@@ -127,7 +127,7 @@ TypeScript, JavaScript, HTML e CSS já vêm no VS Code.
 
 Perfil **não herda** do Default: cada um tem settings, atalhos e snippets próprios (vazios ao
 criar), a não ser que use os do Default (`useDefaultFlags`). O `-ShareDefault` liga isso para
-settings, keybindings, snippets, tasks, prompts e MCP — só as extensões ficam por perfil. Os
+settings, keybindings, snippets, tasks, prompts, MCP e modelos do chat — só as extensões ficam por perfil. Os
 settings base (`workbench.sideBar.location: right`, tema `Visual Studio Dark`,
 `claudeCode.preferredLocation: sidebar`, Source Control em árvore com pastas compactadas
 como o Git Changes do Visual Studio, e não anexar o arquivo aberto no editor ao chat do

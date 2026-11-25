@@ -64,7 +64,7 @@ $BaseSettings = [ordered]@{
 
 # Resources a profile takes from Default. Not extensions (the point of the profile) and not
 # globalState, which also holds the extension enable/disable list.
-$Shared = @('settings', 'keybindings', 'snippets', 'tasks', 'prompts', 'mcp')
+$Shared = @('settings', 'keybindings', 'snippets', 'tasks', 'prompts', 'mcp', 'languageModels')
 
 $Frontend = @(
   'dbaeumer.vscode-eslint',
