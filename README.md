@@ -116,7 +116,7 @@ Extensões são por **perfil**: um workspace só consegue *recomendar* extensõe
 (`extensions.recommendations`), e habilitar/desabilitar por workspace é só pela UI, sem arquivo
 versionável. Por isso cada stack tem um perfil, e o workspace é associado a ele.
 
-| Perfil | Extensões (além de Claude Code, VS Keybindings, Azure Tools pack e Bicep, em todos; Copilot já vem no VS Code) |
+| Perfil | Extensões (além de Claude Code, GitHub Copilot Chat, VS Keybindings, ferramentas Azure e Bicep, em todos) |
 | --- | --- |
 | `default` | — |
 | `dotnet` | .NET Install Tool, C#, C# Dev Kit |
@@ -127,7 +127,12 @@ TypeScript, JavaScript, HTML e CSS já vêm no VS Code.
 
 Cada perfil recebe uma **cópia independente** dos settings, atalhos e extensões comuns,
 incluindo as já instaladas no Default, mais as extensões da stack. O script não remove extensões
-nem altera outras chaves do `settings.json`. Os settings base (`workbench.sideBar.location: right`, tema `Visual Studio Dark`,
+nem altera outras chaves do `settings.json`. O pacote Azure Tools, Foundry Toolkit e Microsoft Foundry
+não são copiados do Default: as outras ferramentas do pacote são instaladas individualmente.
+Claude Code (`anthropic.claude-code`) e GitHub Copilot Chat (`github.copilot-chat`) ficam na lista
+comum. O Copilot Chat pode aparecer como **Built-in** em **Extensions**; o script não muda uma
+extensão que o usuário desabilitou para habilitada.
+Os settings base (`workbench.sideBar.location: right`, tema `Visual Studio Dark`,
 `claudeCode.preferredLocation: sidebar`, Source Control em árvore com pastas compactadas
 como o Git Changes do Visual Studio, e não anexar o arquivo aberto no editor ao chat do
 Copilot nem do Claude Code) são gravados no `settings.json` de cada perfil selecionado. Rode o script

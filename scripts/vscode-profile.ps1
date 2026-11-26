@@ -5,8 +5,8 @@
 .DESCRIPTION
   - A missing profile is created by opening the first -Open path (or an empty window) with
     --profile, since the CLI can only install into a profile that already exists.
-  - Installs the common extensions, extensions already installed in Default, and stack extensions.
-    Existing extensions are kept.
+  - Installs the common extensions, non-excluded extensions already installed in Default, and stack
+    extensions. Existing extensions are kept.
   - Writes the common settings into each selected profile (other keys untouched).
   - Adds the common keybindings before local keybindings, which keep priority.
   - Each -Open path is opened with --profile, which stores the workspace -> profile association.
@@ -33,12 +33,29 @@ $UserDir = if ($IsWindows) {
 }
 $StoragePath = Join-Path $UserDir 'globalStorage/storage.json'
 
-# GitHub Copilot is built into VS Code; nothing to install for it.
 $DefaultExtensions = @(
   'anthropic.claude-code',
+  'github.copilot-chat',
   'ms-vscode.vs-keybindings',
+  'ms-azuretools.vscode-bicep',
+  'ms-azuretools.vscode-azureappservice',
+  'ms-azuretools.vscode-azurestaticwebapps',
+  'ms-azuretools.vscode-azurefunctions',
+  'ms-azuretools.vscode-azurestorage',
+  'ms-azuretools.vscode-cosmosdb',
+  'ms-azuretools.vscode-azurevirtualmachines',
+  'ms-azuretools.vscode-azurecontainerapps',
+  'ms-azuretools.azure-dev',
+  'ms-azuretools.vscode-azure-github-copilot',
+  'ms-azuretools.vscode-azure-mcp-server',
+  'ms-azure-load-testing.microsoft-testing'
+)
+
+# The Azure Tools pack pulls in Foundry Toolkit; install the other Azure tools individually.
+$ExcludedDefaultExtensions = @(
   'ms-vscode.vscode-node-azure-pack',
-  'ms-azuretools.vscode-bicep'
+  'ms-windows-ai-studio.windows-ai-studio',
+  'teamsdevapp.vscode-ai-foundry'
 )
 
 $DefaultSettings = [ordered]@{
@@ -145,7 +162,8 @@ if ($sharedProfiles.Count) {
 
 $installedDefault = @(code --list-extensions)
 if ($LASTEXITCODE -ne 0) { throw 'Could not list extensions in Default.' }
-$commonExtensions = @($DefaultExtensions + $installedDefault | Select-Object -Unique)
+$commonExtensions = @($DefaultExtensions + $installedDefault |
+  Where-Object { $_ -notin $ExcludedDefaultExtensions } | Select-Object -Unique)
 foreach ($p in $Name) {
   $profileDir = $UserDir
   $installed = $installedDefault
