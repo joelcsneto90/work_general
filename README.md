@@ -16,7 +16,7 @@ Cada peça é independente: instalo tudo ou só o que interessa.
 | `agents/` | Subagents globais (vazio por enquanto) |
 | `statusline/` | Status line do Claude (`statusline.js`, só Node built-in), preset do Codex (`codex-status-line.json`) e do footer do Copilot CLI (`copilot-footer.json`) |
 | `scripts/install.ps1` | Instalador seletivo |
-| `scripts/vscode-profile.ps1` | Perfis do VS Code por stack (extensões, settings base, associação de workspace) |
+| `scripts/vscode-profile.ps1` | Perfis do VS Code por stack (extensões, settings, atalhos, associação de workspace) |
 
 ### Módulos de instruções
 
@@ -125,28 +125,30 @@ versionável. Por isso cada stack tem um perfil, e o workspace é associado a el
 
 TypeScript, JavaScript, HTML e CSS já vêm no VS Code.
 
-Perfil **não herda** do Default: cada um tem settings, atalhos e snippets próprios (vazios ao
-criar), a não ser que use os do Default (`useDefaultFlags`). O `-ShareDefault` liga isso para
-settings, keybindings, snippets, tasks, prompts, MCP e modelos do chat — só as extensões ficam por perfil. Os
-settings base (`workbench.sideBar.location: right`, tema `Visual Studio Dark`,
+Cada perfil recebe uma **cópia independente** dos settings, atalhos e extensões comuns,
+incluindo as já instaladas no Default, mais as extensões da stack. O script não remove extensões
+nem altera outras chaves do `settings.json`. Os settings base (`workbench.sideBar.location: right`, tema `Visual Studio Dark`,
 `claudeCode.preferredLocation: sidebar`, Source Control em árvore com pastas compactadas
 como o Git Changes do Visual Studio, e não anexar o arquivo aberto no editor ao chat do
-Copilot nem do Claude Code) vão no `settings.json` do Default; as outras chaves não são tocadas.
+Copilot nem do Claude Code) são gravados no `settings.json` de cada perfil selecionado. Rode o script
+novamente para propagar mudanças; não há herança desses recursos em tempo de execução.
+Os atalhos comuns vão no `keybindings.json` de cada perfil: `F2` renomeia o símbolo,
+`F12` vai à definição e `Ctrl+M` recolhe o bloco quando o editor está em foco. Atalhos
+personalizados já existentes no arquivo mantêm prioridade.
 O Codex não tem setting para isso: o arquivo aberto só sai do contexto pelo toggle no composer.
 
 ```powershell
 ./scripts/vscode-profile.ps1 -Name default,dotnet,angular,react             # cria o que falta e sincroniza
 ./scripts/vscode-profile.ps1 -Name angular -Open D:\path\Projeto.code-workspace   # + associa o workspace
-./scripts/vscode-profile.ps1 -ShareDefault                                  # VS Code fechado
 ```
 
 Roda no Windows e no Linux (PowerShell 7 `pwsh` e o comando `code` no PATH; no Linux usa
-`~/.config/Code/User`). O `-ShareDefault` exige o VS Code fechado (ele regrava o `storage.json` ao sair) e faz backup
-antes. Perfil novo abre uma janela vazia na criação: o CLI só instala em perfil que já existe,
-e só cria abrindo uma janela; depois rode o `-ShareDefault`. Layout das views (ex.: arrastar o
-Claude Code para a barra da direita) é estado de UI do perfil e não é compartilhado. Para lista
-de extensões ou settings base, edite `$Always`, `$BaseSettings`, `$Shared` e `$Profiles` no
-script.
+`~/.config/Code/User`). Se um perfil selecionado compartilhava settings, extensões ou atalhos, feche
+o VS Code antes de rodar: o script faz backup do `storage.json` e desativa esse compartilhamento.
+Perfil novo abre uma janela na criação, pois o CLI só instala extensões em perfis que já existem.
+Layout específico das views (ex.: arrastar o Claude Code para a barra da direita) é estado de UI e não
+é copiado. A configuração fica em `$DefaultExtensions`, `$DefaultSettings`, `$DefaultKeybindings`
+e `$Profiles` no script.
 
 ## Adicionando coisas
 

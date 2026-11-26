@@ -1,34 +1,28 @@
 <#
 .SYNOPSIS
-  Creates/updates VS Code profiles per stack: extensions differ, everything else comes from Default.
+  Creates/updates VS Code profiles with independent copies of common settings, keybindings and extensions.
 
 .DESCRIPTION
-  VS Code profiles do not layer on top of Default: each profile has its own settings,
-  keybindings, snippets, etc. unless it is flagged to use Default's (useDefaultFlags).
-
-  Default mode (VS Code may be running):
   - A missing profile is created by opening the first -Open path (or an empty window) with
     --profile, since the CLI can only install into a profile that already exists.
-  - Installs $Always + the profile's extensions into it. Re-running is idempotent.
-  - Writes $BaseSettings into Default's User/settings.json (other keys untouched).
+  - Installs the common extensions, extensions already installed in Default, and stack extensions.
+    Existing extensions are kept.
+  - Writes the common settings into each selected profile (other keys untouched).
+  - Adds the common keybindings before local keybindings, which keep priority.
   - Each -Open path is opened with --profile, which stores the workspace -> profile association.
-
-  -ShareDefault (VS Code must be closed, it rewrites storage.json on exit):
-  - Sets useDefaultFlags on every non-default profile so it uses Default's $Shared resources.
-    Extensions stay per profile. Backs up storage.json first.
+  - If a selected profile previously shared settings, keybindings or extensions with Default, close VS Code
+    before running so the script can remove those flags and back up storage.json.
 
 .EXAMPLE
   ./scripts/vscode-profile.ps1 -Name default,dotnet,angular,react
   ./scripts/vscode-profile.ps1 -Name dotnet -Open D:\path\Project.code-workspace
-  ./scripts/vscode-profile.ps1 -ShareDefault     # with VS Code closed
 #>
 #Requires -Version 7
 [CmdletBinding()]
 param(
   [ValidateSet('default', 'dotnet', 'angular', 'react')]
   [string[]]$Name = @('default'),
-  [string[]]$Open = @(),
-  [switch]$ShareDefault
+  [string[]]$Open = @()
 )
 
 $ErrorActionPreference = 'Stop'
@@ -40,14 +34,14 @@ $UserDir = if ($IsWindows) {
 $StoragePath = Join-Path $UserDir 'globalStorage/storage.json'
 
 # GitHub Copilot is built into VS Code; nothing to install for it.
-$Always = @(
+$DefaultExtensions = @(
   'anthropic.claude-code',
   'ms-vscode.vs-keybindings',
   'ms-vscode.vscode-node-azure-pack',
   'ms-azuretools.vscode-bicep'
 )
 
-$BaseSettings = [ordered]@{
+$DefaultSettings = [ordered]@{
   'workbench.sideBar.location'   = 'right'
   'workbench.colorTheme'         = 'Visual Studio Dark'
   'claudeCode.preferredLocation' = 'sidebar'
@@ -62,9 +56,11 @@ $BaseSettings = [ordered]@{
   'scm.defaultViewSortKey'       = 'path'
 }
 
-# Resources a profile takes from Default. Not extensions (the point of the profile) and not
-# globalState, which also holds the extension enable/disable list.
-$Shared = @('settings', 'keybindings', 'snippets', 'tasks', 'prompts', 'mcp', 'languageModels')
+$DefaultKeybindings = @(
+  [ordered]@{ key = 'f2'; command = 'editor.action.rename'; when = 'editorHasRenameProvider && editorTextFocus && !editorReadonly' }
+  [ordered]@{ key = 'f12'; command = 'editor.action.revealDefinition'; when = 'editorHasDefinitionProvider && editorTextFocus' }
+  [ordered]@{ key = 'ctrl+m'; command = 'editor.fold'; when = 'editorTextFocus' }
+)
 
 $Frontend = @(
   'dbaeumer.vscode-eslint',
@@ -81,29 +77,20 @@ $Profiles = @{
   react   = $Frontend + 'dsznajder.es7-react-js-snippets'
 }
 
-if ($ShareDefault) {
-  if (Get-Process code -ErrorAction SilentlyContinue) { throw 'Close VS Code first: it rewrites storage.json on exit.' }
-  Copy-Item $StoragePath "$StoragePath.bak-$(Get-Date -Format yyyyMMdd-HHmmss)"
-  $storage = Get-Content $StoragePath -Raw | ConvertFrom-Json -AsHashtable
-  $flags = [ordered]@{}
-  foreach ($r in $Shared) { $flags[$r] = $true }
-  foreach ($p in $storage.userDataProfiles) {
-    $p.useDefaultFlags = $flags
-    "Profile $($p.name) uses Default for: $($Shared -join ', ')"
-  }
-  Set-Content $StoragePath ($storage | ConvertTo-Json -Depth 20)
-  return
-}
-
 function ProfileArgs([string]$p) { if ($p -eq 'default') { @() } else { @('--profile', $p) } }
 
-function Test-Profile([string]$p) { -not ((code --list-extensions @(ProfileArgs $p) 2>&1) -match 'not found') }
+function Read-ProfileStorage {
+  if (Test-Path -LiteralPath $StoragePath) {
+    Get-Content -LiteralPath $StoragePath -Raw | ConvertFrom-Json -AsHashtable
+  }
+}
 
 # Text edit instead of a JSON round-trip: settings.json is JSONC and may hold comments.
 function Set-BaseSettings([string]$path) {
-  $text = if (Test-Path $path) { Get-Content $path -Raw } else { "{`n}`n" }
-  foreach ($key in $BaseSettings.Keys) {
-    $value = $BaseSettings[$key] | ConvertTo-Json -Compress
+  $text = if (Test-Path -LiteralPath $path) { Get-Content -LiteralPath $path -Raw }
+  if ([string]::IsNullOrWhiteSpace($text)) { $text = "{`n}`n" }
+  foreach ($key in $DefaultSettings.Keys) {
+    $value = $DefaultSettings[$key] | ConvertTo-Json -Compress
     # Value: string, flat object, or scalar (bool/number).
     $pattern = '"' + [regex]::Escape($key) + '"\s*:\s*("[^"]*"|\{[^{}]*\}|[^,\s}]+)'
     $text = if ($text -match $pattern) {
@@ -113,34 +100,95 @@ function Set-BaseSettings([string]$path) {
       ([regex]'\{').Replace($text, "{`n    `"$key`": $value$comma", 1)
     }
   }
-  Set-Content $path $text -NoNewline
+  Set-Content -LiteralPath $path -Value $text -NoNewline
 }
 
-$created = $false
+function Set-BaseKeybindings([string]$path) {
+  $text = if (Test-Path -LiteralPath $path) { Get-Content -LiteralPath $path -Raw }
+  if ([string]::IsNullOrWhiteSpace($text)) { $text = "[]`n" }
+  $begin = '// work_general:keybindings:begin'
+  $end = '// work_general:keybindings:end'
+  $text = $text -replace "(?ms)(?<=\n)  $begin\r?\n.*?^  $end\r?\n", ''
+  $local = ConvertFrom-Json -InputObject $text -NoEnumerate
+  $opening = [regex]::Match($text, '\A(?:\s|//[^\r\n]*|/\*[\s\S]*?\*/)*\[')
+  if ($local -isnot [array] -or -not $opening.Success) { throw "Expected a keybindings array in '$path'." }
+
+  $entries = ($DefaultKeybindings | ForEach-Object { '  ' + ($_ | ConvertTo-Json -Compress) }) -join ",`n"
+  if ($local.Count) { $entries += ',' }
+  $index = $opening.Length
+  if ($text.Substring($index) -match '^\r?\n') {
+    $index += $Matches[0].Length
+  } else {
+    $text = $text.Insert($index, "`n")
+    $index++
+  }
+  Set-Content -LiteralPath $path -Value ($text.Insert($index, "  $begin`n$entries`n  $end`n")) -NoNewline
+}
+
+$managedResources = @('settings', 'extensions', 'keybindings')
+$storage = Read-ProfileStorage
+$sharedProfiles = @($storage.userDataProfiles | Where-Object {
+  $profile = $_
+  $profile.name -in $Name -and ($managedResources | Where-Object { $profile.useDefaultFlags -and $profile.useDefaultFlags[$_] })
+})
+if ($sharedProfiles.Count) {
+  if (Get-Process code -ErrorAction SilentlyContinue) {
+    throw 'Close VS Code before converting shared profile resources into independent copies.'
+  }
+  Copy-Item -LiteralPath $StoragePath -Destination "$StoragePath.bak-$(Get-Date -Format yyyyMMdd-HHmmss)"
+  foreach ($profile in $sharedProfiles) {
+    foreach ($resource in $managedResources) { $profile.useDefaultFlags.Remove($resource) }
+    "Profile $($profile.name) now owns its settings, extensions and keybindings"
+  }
+  Set-Content -LiteralPath $StoragePath ($storage | ConvertTo-Json -Depth 100)
+}
+
+$installedDefault = @(code --list-extensions)
+if ($LASTEXITCODE -ne 0) { throw 'Could not list extensions in Default.' }
+$commonExtensions = @($DefaultExtensions + $installedDefault | Select-Object -Unique)
 foreach ($p in $Name) {
-  if (-not (Test-Profile $p)) {
-    if ($Open.Count) { code --profile $p $Open[0] } else { code --profile $p --new-window }
-    $deadline = (Get-Date).AddSeconds(30)
-    while (-not (Test-Profile $p)) {
-      if ((Get-Date) -gt $deadline) { throw "Profile '$p' was not created within 30s." }
-      Start-Sleep -Seconds 1
+  $profileDir = $UserDir
+  $installed = $installedDefault
+  if ($p -ne 'default') {
+    $profile = $storage.userDataProfiles | Where-Object name -EQ $p
+    if (-not $profile) {
+      if ($Open.Count) { code --profile $p $Open[0] } else { code --profile $p --new-window }
+      if ($LASTEXITCODE -ne 0) { throw "Could not open VS Code to create profile '$p'." }
+      $deadline = (Get-Date).AddSeconds(30)
+      do {
+        Start-Sleep -Seconds 1
+        $storage = Read-ProfileStorage
+        $profile = $storage.userDataProfiles | Where-Object name -EQ $p
+      } until ($profile -or (Get-Date) -ge $deadline)
+      if (-not $profile) { throw "Profile '$p' was not created within 30s." }
+      "Profile $p created"
     }
-    "Profile $p created"
-    $created = $true
+    if (-not $profile.location) { throw "Could not find the settings directory for profile '$p'." }
+    $profileDir = Join-Path (Join-Path $UserDir 'profiles') $profile.location
+    $installed = @(code --list-extensions @(ProfileArgs $p))
+    if ($LASTEXITCODE -ne 0) { throw "Could not list extensions in profile '$p'." }
   }
 
-  $installed = @(code --list-extensions @(ProfileArgs $p))
-  foreach ($ext in $Always + $Profiles[$p]) {
-    if ($ext -in $installed) { "Extension $ext already in $p"; continue }
-    code --install-extension $ext @(ProfileArgs $p)
+  $installArgs = foreach ($ext in $commonExtensions + $Profiles[$p] | Select-Object -Unique) {
+    if ($ext -notin $installed) { '--install-extension'; $ext }
   }
+  if ($installArgs) {
+    "Installing missing extensions in $p"
+    code @installArgs @(ProfileArgs $p)
+    if ($LASTEXITCODE -ne 0) { throw "Could not install extensions in profile '$p'." }
+  } else {
+    "Extensions already up to date in $p"
+  }
+
+  $null = New-Item -Path $profileDir -ItemType Directory -Force
+  Set-BaseSettings (Join-Path $profileDir 'settings.json')
+  "Base settings -> $p settings.json"
+  Set-BaseKeybindings (Join-Path $profileDir 'keybindings.json')
+  "Base keybindings -> $p keybindings.json"
 
   foreach ($path in $Open) {
     code @(ProfileArgs $p) $path
+    if ($LASTEXITCODE -ne 0) { throw "Could not open '$path' with profile '$p'." }
     "Opened $path with profile $p"
   }
 }
-
-Set-BaseSettings (Join-Path $UserDir 'settings.json')
-'Base settings -> Default settings.json'
-if ($created) { 'New profile: close VS Code and run with -ShareDefault so it uses Default settings.' }
