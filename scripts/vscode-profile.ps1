@@ -10,8 +10,11 @@
   - Writes the common settings into each selected profile (other keys untouched).
   - Adds the common keybindings before local keybindings, which keep priority.
   - Each -Open path is opened with --profile, which stores the workspace -> profile association.
-  - If a selected profile previously shared settings, keybindings or extensions with Default, close VS Code
-    before running so the script can remove those flags and back up storage.json.
+  - Enables, in each existing selected profile, the common and stack extensions that were disabled there
+    (not the ones only copied from Default).
+    Needs Python 3 (sqlite3) to edit the profile's state.vscdb.
+  - If a selected profile previously shared settings, keybindings or extensions with Default, or has one of
+    these extensions disabled, close VS Code before running: it rewrites storage.json and state.vscdb on exit.
 
 .EXAMPLE
   ./scripts/vscode-profile.ps1 -Name default,dotnet,angular,react
@@ -159,6 +162,50 @@ $installedDefault = @(code --list-extensions)
 if ($LASTEXITCODE -ne 0) { throw 'Could not list extensions in Default.' }
 $commonExtensions = @($DefaultExtensions + $installedDefault |
   Where-Object { $_ -notin $ExcludedDefaultExtensions } | Select-Object -Unique)
+
+# Disabled extensions live in each profile's state.vscdb (SQLite), which the CLI cannot change.
+# Reads {db: [ids]} from stdin, prints "db<TAB>ids" for those disabled there, and with 'write' enables them.
+$EnableScript = @'
+import json, sqlite3, sys
+key = 'extensionsIdentifiers/disabled'
+for path, ids in json.load(sys.stdin).items():
+    ids = {i.lower() for i in ids}
+    db = sqlite3.connect(path)
+    row = db.execute('select value from ItemTable where key = ?', (key,)).fetchone()
+    disabled = json.loads(row[0]) if row else []
+    found = [e['id'] for e in disabled if e['id'].lower() in ids]
+    if found:
+        print(path + '\t' + ','.join(found))
+        if sys.argv[1] == 'write':
+            keep = [e for e in disabled if e['id'].lower() not in ids]
+            db.execute('update ItemTable set value = ? where key = ?', (json.dumps(keep), key))
+            db.commit()
+    db.close()
+'@
+$Python = if ($IsWindows) { 'python' } else { 'python3' }
+$enableMap = @{}
+foreach ($p in $Name) {
+  $dir = if ($p -eq 'default') { $UserDir } else {
+    $location = ($storage.userDataProfiles | Where-Object name -EQ $p).location
+    if ($location) { Join-Path (Join-Path $UserDir 'profiles') $location }
+  }
+  $db = if ($dir) { Join-Path $dir 'globalStorage/state.vscdb' }
+  # Only the script's own lists: extensions copied from Default keep the state the user chose.
+  if ($db -and (Test-Path -LiteralPath $db)) { $enableMap[$db] = @($DefaultExtensions + $Profiles[$p] | Select-Object -Unique) }
+}
+if ($enableMap.Count) {
+  $enableJson = $enableMap | ConvertTo-Json -Depth 3 -Compress
+  $toEnable = @($enableJson | & $Python -c $EnableScript read)
+  if ($LASTEXITCODE -ne 0) { throw 'Could not read disabled extensions.' }
+  if ($toEnable.Count) {
+    if (Get-Process code -ErrorAction SilentlyContinue) {
+      throw "Close VS Code to enable disabled extensions:`n$($toEnable -join "`n")"
+    }
+    $null = $enableJson | & $Python -c $EnableScript write
+    if ($LASTEXITCODE -ne 0) { throw 'Could not enable disabled extensions.' }
+    $toEnable | ForEach-Object { "Enabled -> $_" }
+  }
+}
 foreach ($p in $Name) {
   $profileDir = $UserDir
   $installed = $installedDefault
