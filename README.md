@@ -116,12 +116,12 @@ Extensões são por **perfil**: um workspace só consegue *recomendar* extensõe
 (`extensions.recommendations`), e habilitar/desabilitar por workspace é só pela UI, sem arquivo
 versionável. Por isso cada stack tem um perfil, e o workspace é associado a ele.
 
-| Perfil | Extensões (além de Claude Code, GitHub Copilot Chat, VS Keybindings, ferramentas Azure e Bicep, em todos) |
+| Perfil | Extensões (além de Claude Code, GitHub Copilot Chat, VS Keybindings, ferramentas Azure, Bicep, HTML CSS Support e Prettier, em todos) |
 | --- | --- |
 | `default` | — |
 | `dotnet` | .NET Install Tool, C#, C# Dev Kit |
-| `angular` | ESLint, Prettier, HTML CSS Support, Path Intellisense, Angular Language Service |
-| `react` | ESLint, Prettier, HTML CSS Support, Path Intellisense, ES7+ React snippets |
+| `angular` | ESLint, Angular Language Service |
+| `react` | ESLint |
 
 TypeScript, JavaScript, HTML e CSS já vêm no VS Code.
 

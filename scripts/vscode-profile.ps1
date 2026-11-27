@@ -48,7 +48,9 @@ $DefaultExtensions = @(
   'ms-azuretools.azure-dev',
   'ms-azuretools.vscode-azure-github-copilot',
   'ms-azuretools.vscode-azure-mcp-server',
-  'ms-azure-load-testing.microsoft-testing'
+  'ms-azure-load-testing.microsoft-testing',
+  'ecmel.vscode-html-css',
+  'esbenp.prettier-vscode'
 )
 
 # The Azure Tools pack pulls in Foundry Toolkit; install the other Azure tools individually.
@@ -79,19 +81,12 @@ $DefaultKeybindings = @(
   [ordered]@{ key = 'ctrl+m'; command = 'editor.fold'; when = 'editorTextFocus' }
 )
 
-$Frontend = @(
-  'dbaeumer.vscode-eslint',
-  'esbenp.prettier-vscode',
-  'ecmel.vscode-html-css',
-  'christian-kohler.path-intellisense'
-)
-
 # TypeScript, JavaScript, HTML and CSS language support is built into VS Code.
 $Profiles = @{
   default = @()
   dotnet  = @('ms-dotnettools.vscode-dotnet-runtime', 'ms-dotnettools.csharp', 'ms-dotnettools.csdevkit')
-  angular = $Frontend + 'angular.ng-template'
-  react   = $Frontend + 'dsznajder.es7-react-js-snippets'
+  angular = @('dbaeumer.vscode-eslint', 'angular.ng-template')
+  react   = @('dbaeumer.vscode-eslint')
 }
 
 function ProfileArgs([string]$p) { if ($p -eq 'default') { @() } else { @('--profile', $p) } }
